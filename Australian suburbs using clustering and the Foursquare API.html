@@ -1,0 +1,4636 @@
+<!DOCTYPE html>
+<html lang="english">
+
+<head>
+  <!-- Required meta tags always come first -->
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <title>Recommender system: Australian suburbs using clustering and the Foursquare API | Dataist Dogma
+</title>
+  <link rel="canonical" href="http://dataistdogma.github.io/Australian suburbs using clustering and the Foursquare API.html">
+
+  <link rel="alternate" type="application/atom+xml" href="http://dataistdogma.github.io/feeds/all.atom.xml" title="Full Atom Feed">
+  <link rel="alternate" type="application/atom+xml" href="http://dataistdogma.github.io/feeds/projects.atom.xml" title="Categories Atom Feed">
+
+
+  <link rel="stylesheet" href="http://dataistdogma.github.io/theme/css/bootstrap.min.css">
+  <link rel="stylesheet" href="http://dataistdogma.github.io/theme/css/font-awesome.min.css">
+  <link rel="stylesheet" href="http://dataistdogma.github.io/theme/css/pygments/default.min.css">
+  <link rel="stylesheet" href="http://dataistdogma.github.io/theme/css/style.css">
+
+
+<meta name="description" content="This project utilizes publicly available data to recommend 10 similar suburbs in Australia to a given suburb. This could be useful for people trying to decide where to work, rent or buy property. It utilizes K-Means clustering from Scikit-learn to cluster venue and cultural data, the pandasdmx package to interface with the Australian Bureau of Statistics API, and the Beautiful Soup package to scrape demographic information from the web.">
+</head>
+
+<body>
+  <header class="header">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm-12">
+          <h1 class="title"><a href="http://dataistdogma.github.io">Dataist Dogma</a></h1>
+          <p class="text-muted">Reflections and projects in Data Science, Machine Learning and AI "A critical examination of the Dataist dogma is likely to be not only the greatest scientific challenge of the twenty-first century, but also the most urgent political and economic project" - Yuval Noah Harari - Homo Deus: a Brief History of the Future (2016)</p>
+          <ul class="list-inline">
+            <li class="list-inline-item"><a href="#" target="_blank">Tony Hall</a></li>
+            <li class=" list-inline-item text-muted">|</li>
+            <li class="list-inline-item"><a class="fa fa-linkedin" href="https://www.linkedin.com/in/tony-hall-melbourne/" target="_blank"></a></li>
+            <li class="list-inline-item"><a class="fa fa-github" href="https://github.com/DataistDogma" target="_blank"></a></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main">
+    <div class="container">
+      <h1>Recommender system: Australian suburbs using clustering and the Foursquare API
+</h1>
+      <hr>
+<article class="article">
+  <header>
+    <ul class="list-inline">
+      <li class="list-inline-item text-muted" title="2019-07-17T20:00:00+10:00">
+        <i class="fa fa-clock-o"></i>
+        Wed 17 July 2019
+      </li>
+      <li class="list-inline-item">
+        <i class="fa fa-folder-open-o"></i>
+        <a href="http://dataistdogma.github.io/category/projects.html">Projects</a>
+      </li>
+      <li class="list-inline-item">
+        <i class="fa fa-user-o"></i>
+        <a href="http://dataistdogma.github.io/author/tony-hall.html">Tony Hall</a>      </li>
+      <li class="list-inline-item">
+        <i class="fa fa-files-o"></i>
+        <a href="http://dataistdogma.github.io/tag/foursquare-abs-suburbs-recommender-recommendation.html">#Foursquare ABS Suburbs Recommender Recommendation</a>      </li>
+    </ul>
+  </header>
+  <div class="content">
+    <style type="text/css">/*!
+*
+* IPython notebook
+*
+*/
+/* CSS font colors for translated ANSI escape sequences */
+/* The color values are a mix of
+   http://www.xcolors.net/dl/baskerville-ivorylight and
+   http://www.xcolors.net/dl/euphrasia */
+.ansi-black-fg {
+  color: #3E424D;
+}
+.ansi-black-bg {
+  background-color: #3E424D;
+}
+.ansi-black-intense-fg {
+  color: #282C36;
+}
+.ansi-black-intense-bg {
+  background-color: #282C36;
+}
+.ansi-red-fg {
+  color: #E75C58;
+}
+.ansi-red-bg {
+  background-color: #E75C58;
+}
+.ansi-red-intense-fg {
+  color: #B22B31;
+}
+.ansi-red-intense-bg {
+  background-color: #B22B31;
+}
+.ansi-green-fg {
+  color: #00A250;
+}
+.ansi-green-bg {
+  background-color: #00A250;
+}
+.ansi-green-intense-fg {
+  color: #007427;
+}
+.ansi-green-intense-bg {
+  background-color: #007427;
+}
+.ansi-yellow-fg {
+  color: #DDB62B;
+}
+.ansi-yellow-bg {
+  background-color: #DDB62B;
+}
+.ansi-yellow-intense-fg {
+  color: #B27D12;
+}
+.ansi-yellow-intense-bg {
+  background-color: #B27D12;
+}
+.ansi-blue-fg {
+  color: #208FFB;
+}
+.ansi-blue-bg {
+  background-color: #208FFB;
+}
+.ansi-blue-intense-fg {
+  color: #0065CA;
+}
+.ansi-blue-intense-bg {
+  background-color: #0065CA;
+}
+.ansi-magenta-fg {
+  color: #D160C4;
+}
+.ansi-magenta-bg {
+  background-color: #D160C4;
+}
+.ansi-magenta-intense-fg {
+  color: #A03196;
+}
+.ansi-magenta-intense-bg {
+  background-color: #A03196;
+}
+.ansi-cyan-fg {
+  color: #60C6C8;
+}
+.ansi-cyan-bg {
+  background-color: #60C6C8;
+}
+.ansi-cyan-intense-fg {
+  color: #258F8F;
+}
+.ansi-cyan-intense-bg {
+  background-color: #258F8F;
+}
+.ansi-white-fg {
+  color: #C5C1B4;
+}
+.ansi-white-bg {
+  background-color: #C5C1B4;
+}
+.ansi-white-intense-fg {
+  color: #A1A6B2;
+}
+.ansi-white-intense-bg {
+  background-color: #A1A6B2;
+}
+.ansi-default-inverse-fg {
+  color: #FFFFFF;
+}
+.ansi-default-inverse-bg {
+  background-color: #000000;
+}
+.ansi-bold {
+  font-weight: bold;
+}
+.ansi-underline {
+  text-decoration: underline;
+}
+/* The following styles are deprecated an will be removed in a future version */
+.ansibold {
+  font-weight: bold;
+}
+.ansi-inverse {
+  outline: 0.5px dotted;
+}
+/* use dark versions for foreground, to improve visibility */
+.ansiblack {
+  color: black;
+}
+.ansired {
+  color: darkred;
+}
+.ansigreen {
+  color: darkgreen;
+}
+.ansiyellow {
+  color: #c4a000;
+}
+.ansiblue {
+  color: darkblue;
+}
+.ansipurple {
+  color: darkviolet;
+}
+.ansicyan {
+  color: steelblue;
+}
+.ansigray {
+  color: gray;
+}
+/* and light for background, for the same reason */
+.ansibgblack {
+  background-color: black;
+}
+.ansibgred {
+  background-color: red;
+}
+.ansibggreen {
+  background-color: green;
+}
+.ansibgyellow {
+  background-color: yellow;
+}
+.ansibgblue {
+  background-color: blue;
+}
+.ansibgpurple {
+  background-color: magenta;
+}
+.ansibgcyan {
+  background-color: cyan;
+}
+.ansibggray {
+  background-color: gray;
+}
+div.cell {
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: vertical;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-radius: 2px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  border-width: 1px;
+  border-style: solid;
+  border-color: transparent;
+  width: 100%;
+  padding: 5px;
+  /* This acts as a spacer between cells, that is outside the border */
+  margin: 0px;
+  outline: none;
+  position: relative;
+  overflow: visible;
+}
+div.cell:before {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  width: 5px;
+  height: calc(100% +  2px);
+  content: '';
+  background: transparent;
+}
+div.cell.jupyter-soft-selected {
+  border-left-color: #E3F2FD;
+  border-left-width: 1px;
+  padding-left: 5px;
+  border-right-color: #E3F2FD;
+  border-right-width: 1px;
+  background: #E3F2FD;
+}
+@media print {
+  div.cell.jupyter-soft-selected {
+    border-color: transparent;
+  }
+}
+div.cell.selected,
+div.cell.selected.jupyter-soft-selected {
+  border-color: #ababab;
+}
+div.cell.selected:before,
+div.cell.selected.jupyter-soft-selected:before {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  width: 5px;
+  height: calc(100% +  2px);
+  content: '';
+  background: #42A5F5;
+}
+@media print {
+  div.cell.selected,
+  div.cell.selected.jupyter-soft-selected {
+    border-color: transparent;
+  }
+}
+.edit_mode div.cell.selected {
+  border-color: #66BB6A;
+}
+.edit_mode div.cell.selected:before {
+  position: absolute;
+  display: block;
+  top: -1px;
+  left: -1px;
+  width: 5px;
+  height: calc(100% +  2px);
+  content: '';
+  background: #66BB6A;
+}
+@media print {
+  .edit_mode div.cell.selected {
+    border-color: transparent;
+  }
+}
+.prompt {
+  /* This needs to be wide enough for 3 digit prompt numbers: In[100]: */
+  min-width: 14ex;
+  /* This padding is tuned to match the padding on the CodeMirror editor. */
+  padding: 0.4em;
+  margin: 0px;
+  font-family: monospace;
+  text-align: right;
+  /* This has to match that of the the CodeMirror class line-height below */
+  line-height: 1.21429em;
+  /* Don't highlight prompt number selection */
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  /* Use default cursor */
+  cursor: default;
+}
+@media (max-width: 540px) {
+  .prompt {
+    text-align: left;
+  }
+}
+div.inner_cell {
+  min-width: 0;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: vertical;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  /* Old browsers */
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  box-flex: 1;
+  /* Modern browsers */
+  flex: 1;
+}
+/* input_area and input_prompt must match in top border and margin for alignment */
+div.input_area {
+  border: 1px solid #cfcfcf;
+  border-radius: 2px;
+  background: #f7f7f7;
+  line-height: 1.21429em;
+}
+/* This is needed so that empty prompt areas can collapse to zero height when there
+   is no content in the output_subarea and the prompt. The main purpose of this is
+   to make sure that empty JavaScript output_subareas have no height. */
+div.prompt:empty {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+div.unrecognized_cell {
+  padding: 5px 5px 5px 0px;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: horizontal;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+div.unrecognized_cell .inner_cell {
+  border-radius: 2px;
+  padding: 5px;
+  font-weight: bold;
+  color: red;
+  border: 1px solid #cfcfcf;
+  background: #eaeaea;
+}
+div.unrecognized_cell .inner_cell a {
+  color: inherit;
+  text-decoration: none;
+}
+div.unrecognized_cell .inner_cell a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+@media (max-width: 540px) {
+  div.unrecognized_cell > div.prompt {
+    display: none;
+  }
+}
+div.code_cell {
+  /* avoid page breaking on code cells when printing */
+}
+@media print {
+  div.code_cell {
+    page-break-inside: avoid;
+  }
+}
+/* any special styling for code cells that are currently running goes here */
+div.input {
+  page-break-inside: avoid;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: horizontal;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+@media (max-width: 540px) {
+  div.input {
+    /* Old browsers */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-box-align: stretch;
+    display: -moz-box;
+    -moz-box-orient: vertical;
+    -moz-box-align: stretch;
+    display: box;
+    box-orient: vertical;
+    box-align: stretch;
+    /* Modern browsers */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+/* input_area and input_prompt must match in top border and margin for alignment */
+div.input_prompt {
+  color: #303F9F;
+  border-top: 1px solid transparent;
+}
+div.input_area > div.highlight {
+  margin: 0.4em;
+  border: none;
+  padding: 0px;
+  background-color: transparent;
+}
+div.input_area > div.highlight > pre {
+  margin: 0px;
+  border: none;
+  padding: 0px;
+  background-color: transparent;
+}
+/* The following gets added to the <head> if it is detected that the user has a
+ * monospace font with inconsistent normal/bold/italic height.  See
+ * notebookmain.js.  Such fonts will have keywords vertically offset with
+ * respect to the rest of the text.  The user should select a better font.
+ * See: https://github.com/ipython/ipython/issues/1503
+ *
+ * .CodeMirror span {
+ *      vertical-align: bottom;
+ * }
+ */
+.CodeMirror {
+  line-height: 1.21429em;
+  /* Changed from 1em to our global default */
+  font-size: 14px;
+  height: auto;
+  /* Changed to auto to autogrow */
+  background: none;
+  /* Changed from white to allow our bg to show through */
+}
+.CodeMirror-scroll {
+  /*  The CodeMirror docs are a bit fuzzy on if overflow-y should be hidden or visible.*/
+  /*  We have found that if it is visible, vertical scrollbars appear with font size changes.*/
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+.CodeMirror-lines {
+  /* In CM2, this used to be 0.4em, but in CM3 it went to 4px. We need the em value because */
+  /* we have set a different line-height and want this to scale with that. */
+  /* Note that this should set vertical padding only, since CodeMirror assumes
+       that horizontal padding will be set on CodeMirror pre */
+  padding: 0.4em 0;
+}
+.CodeMirror-linenumber {
+  padding: 0 8px 0 4px;
+}
+.CodeMirror-gutters {
+  border-bottom-left-radius: 2px;
+  border-top-left-radius: 2px;
+}
+.CodeMirror pre {
+  /* In CM3 this went to 4px from 0 in CM2. This sets horizontal padding only,
+    use .CodeMirror-lines for vertical */
+  padding: 0 0.4em;
+  border: 0;
+  border-radius: 0;
+}
+.CodeMirror-cursor {
+  border-left: 1.4px solid black;
+}
+@media screen and (min-width: 2138px) and (max-width: 4319px) {
+  .CodeMirror-cursor {
+    border-left: 2px solid black;
+  }
+}
+@media screen and (min-width: 4320px) {
+  .CodeMirror-cursor {
+    border-left: 4px solid black;
+  }
+}
+/*
+
+Original style from softwaremaniacs.org (c) Ivan Sagalaev <Maniac@SoftwareManiacs.Org>
+Adapted from GitHub theme
+
+*/
+.highlight-base {
+  color: #000;
+}
+.highlight-variable {
+  color: #000;
+}
+.highlight-variable-2 {
+  color: #1a1a1a;
+}
+.highlight-variable-3 {
+  color: #333333;
+}
+.highlight-string {
+  color: #BA2121;
+}
+.highlight-comment {
+  color: #408080;
+  font-style: italic;
+}
+.highlight-number {
+  color: #080;
+}
+.highlight-atom {
+  color: #88F;
+}
+.highlight-keyword {
+  color: #008000;
+  font-weight: bold;
+}
+.highlight-builtin {
+  color: #008000;
+}
+.highlight-error {
+  color: #f00;
+}
+.highlight-operator {
+  color: #AA22FF;
+  font-weight: bold;
+}
+.highlight-meta {
+  color: #AA22FF;
+}
+/* previously not defined, copying from default codemirror */
+.highlight-def {
+  color: #00f;
+}
+.highlight-string-2 {
+  color: #f50;
+}
+.highlight-qualifier {
+  color: #555;
+}
+.highlight-bracket {
+  color: #997;
+}
+.highlight-tag {
+  color: #170;
+}
+.highlight-attribute {
+  color: #00c;
+}
+.highlight-header {
+  color: blue;
+}
+.highlight-quote {
+  color: #090;
+}
+.highlight-link {
+  color: #00c;
+}
+/* apply the same style to codemirror */
+.cm-s-ipython span.cm-keyword {
+  color: #008000;
+  font-weight: bold;
+}
+.cm-s-ipython span.cm-atom {
+  color: #88F;
+}
+.cm-s-ipython span.cm-number {
+  color: #080;
+}
+.cm-s-ipython span.cm-def {
+  color: #00f;
+}
+.cm-s-ipython span.cm-variable {
+  color: #000;
+}
+.cm-s-ipython span.cm-operator {
+  color: #AA22FF;
+  font-weight: bold;
+}
+.cm-s-ipython span.cm-variable-2 {
+  color: #1a1a1a;
+}
+.cm-s-ipython span.cm-variable-3 {
+  color: #333333;
+}
+.cm-s-ipython span.cm-comment {
+  color: #408080;
+  font-style: italic;
+}
+.cm-s-ipython span.cm-string {
+  color: #BA2121;
+}
+.cm-s-ipython span.cm-string-2 {
+  color: #f50;
+}
+.cm-s-ipython span.cm-meta {
+  color: #AA22FF;
+}
+.cm-s-ipython span.cm-qualifier {
+  color: #555;
+}
+.cm-s-ipython span.cm-builtin {
+  color: #008000;
+}
+.cm-s-ipython span.cm-bracket {
+  color: #997;
+}
+.cm-s-ipython span.cm-tag {
+  color: #170;
+}
+.cm-s-ipython span.cm-attribute {
+  color: #00c;
+}
+.cm-s-ipython span.cm-header {
+  color: blue;
+}
+.cm-s-ipython span.cm-quote {
+  color: #090;
+}
+.cm-s-ipython span.cm-link {
+  color: #00c;
+}
+.cm-s-ipython span.cm-error {
+  color: #f00;
+}
+.cm-s-ipython span.cm-tab {
+  background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAMCAYAAAAkuj5RAAAAAXNSR0IArs4c6QAAAGFJREFUSMft1LsRQFAQheHPowAKoACx3IgEKtaEHujDjORSgWTH/ZOdnZOcM/sgk/kFFWY0qV8foQwS4MKBCS3qR6ixBJvElOobYAtivseIE120FaowJPN75GMu8j/LfMwNjh4HUpwg4LUAAAAASUVORK5CYII=);
+  background-position: right;
+  background-repeat: no-repeat;
+}
+div.output_wrapper {
+  /* this position must be relative to enable descendents to be absolute within it */
+  position: relative;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: vertical;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  z-index: 1;
+}
+/* class for the output area when it should be height-limited */
+div.output_scroll {
+  /* ideally, this would be max-height, but FF barfs all over that */
+  height: 24em;
+  /* FF needs this *and the wrapper* to specify full width, or it will shrinkwrap */
+  width: 100%;
+  overflow: auto;
+  border-radius: 2px;
+  -webkit-box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.8);
+  display: block;
+}
+/* output div while it is collapsed */
+div.output_collapsed {
+  margin: 0px;
+  padding: 0px;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: vertical;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+div.out_prompt_overlay {
+  height: 100%;
+  padding: 0px 0.4em;
+  position: absolute;
+  border-radius: 2px;
+}
+div.out_prompt_overlay:hover {
+  /* use inner shadow to get border that is computed the same on WebKit/FF */
+  -webkit-box-shadow: inset 0 0 1px #000;
+  box-shadow: inset 0 0 1px #000;
+  background: rgba(240, 240, 240, 0.5);
+}
+div.output_prompt {
+  color: #D84315;
+}
+/* This class is the outer container of all output sections. */
+div.output_area {
+  padding: 0px;
+  page-break-inside: avoid;
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: horizontal;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+div.output_area .MathJax_Display {
+  text-align: left !important;
+}
+div.output_area 
+div.output_area 
+div.output_area img,
+div.output_area svg {
+  max-width: 100%;
+  height: auto;
+}
+div.output_area img.unconfined,
+div.output_area svg.unconfined {
+  max-width: none;
+}
+div.output_area .mglyph > img {
+  max-width: none;
+}
+/* This is needed to protect the pre formating from global settings such
+   as that of bootstrap */
+.output {
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: vertical;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: vertical;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+@media (max-width: 540px) {
+  div.output_area {
+    /* Old browsers */
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-box-align: stretch;
+    display: -moz-box;
+    -moz-box-orient: vertical;
+    -moz-box-align: stretch;
+    display: box;
+    box-orient: vertical;
+    box-align: stretch;
+    /* Modern browsers */
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+div.output_area pre {
+  margin: 0;
+  padding: 1px 0 1px 0;
+  border: 0;
+  vertical-align: baseline;
+  color: black;
+  background-color: transparent;
+  border-radius: 0;
+}
+/* This class is for the output subarea inside the output_area and after
+   the prompt div. */
+div.output_subarea {
+  overflow-x: auto;
+  padding: 0.4em;
+  /* Old browsers */
+  -webkit-box-flex: 1;
+  -moz-box-flex: 1;
+  box-flex: 1;
+  /* Modern browsers */
+  flex: 1;
+  max-width: calc(100% - 14ex);
+}
+div.output_scroll div.output_subarea {
+  overflow-x: visible;
+}
+/* The rest of the output_* classes are for special styling of the different
+   output types */
+/* all text output has this class: */
+div.output_text {
+  text-align: left;
+  color: #000;
+  /* This has to match that of the the CodeMirror class line-height below */
+  line-height: 1.21429em;
+}
+/* stdout/stderr are 'text' as well as 'stream', but execute_result/error are *not* streams */
+div.output_stderr {
+  background: #fdd;
+  /* very light red background for stderr */
+}
+div.output_latex {
+  text-align: left;
+}
+/* Empty output_javascript divs should have no height */
+div.output_javascript:empty {
+  padding: 0;
+}
+.js-error {
+  color: darkred;
+}
+/* raw_input styles */
+div.raw_input_container {
+  line-height: 1.21429em;
+  padding-top: 5px;
+}
+pre.raw_input_prompt {
+  /* nothing needed here. */
+}
+input.raw_input {
+  font-family: monospace;
+  font-size: inherit;
+  color: inherit;
+  width: auto;
+  /* make sure input baseline aligns with prompt */
+  vertical-align: baseline;
+  /* padding + margin = 0.5em between prompt and cursor */
+  padding: 0em 0.25em;
+  margin: 0em 0.25em;
+}
+input.raw_input:focus {
+  box-shadow: none;
+}
+p.p-space {
+  margin-bottom: 10px;
+}
+div.output_unrecognized {
+  padding: 5px;
+  font-weight: bold;
+  color: red;
+}
+div.output_unrecognized a {
+  color: inherit;
+  text-decoration: none;
+}
+div.output_unrecognized a:hover {
+  color: inherit;
+  text-decoration: none;
+}
+.rendered_html {
+  color: #000;
+  /* any extras will just be numbers: */
+}
+
+
+
+.rendered_html :link {
+  text-decoration: underline;
+}
+.rendered_html :visited {
+  text-decoration: underline;
+}
+
+
+
+
+
+
+.rendered_html h1:first-child {
+  margin-top: 0.538em;
+}
+.rendered_html h2:first-child {
+  margin-top: 0.636em;
+}
+.rendered_html h3:first-child {
+  margin-top: 0.777em;
+}
+.rendered_html h4:first-child {
+  margin-top: 1em;
+}
+.rendered_html h5:first-child {
+  margin-top: 1em;
+}
+.rendered_html h6:first-child {
+  margin-top: 1em;
+}
+.rendered_html ul:not(.list-inline),
+.rendered_html ol:not(.list-inline) {
+  padding-left: 2em;
+}
+
+
+
+
+
+
+
+
+.rendered_html * + ul {
+  margin-top: 1em;
+}
+.rendered_html * + ol {
+  margin-top: 1em;
+}
+
+
+
+
+
+.rendered_html pre,
+
+
+
+
+.rendered_html tr,
+.rendered_html th,
+
+
+.rendered_html tbody tr:nth-child(odd) {
+  background: #f5f5f5;
+}
+.rendered_html tbody tr:hover {
+  background: rgba(66, 165, 245, 0.2);
+}
+.rendered_html * + table {
+  margin-top: 1em;
+}
+
+.rendered_html * + p {
+  margin-top: 1em;
+}
+
+.rendered_html * + img {
+  margin-top: 1em;
+}
+.rendered_html img,
+
+.rendered_html img.unconfined,
+
+
+.rendered_html * + .alert {
+  margin-top: 1em;
+}
+[dir="rtl"] 
+div.text_cell {
+  /* Old browsers */
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-align: stretch;
+  display: -moz-box;
+  -moz-box-orient: horizontal;
+  -moz-box-align: stretch;
+  display: box;
+  box-orient: horizontal;
+  box-align: stretch;
+  /* Modern browsers */
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+@media (max-width: 540px) {
+  div.text_cell > div.prompt {
+    display: none;
+  }
+}
+div.text_cell_render {
+  /*font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;*/
+  outline: none;
+  resize: none;
+  width: inherit;
+  border-style: none;
+  padding: 0.5em 0.5em 0.5em 0.4em;
+  color: #000;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+}
+a.anchor-link:link {
+  text-decoration: none;
+  padding: 0px 20px;
+  visibility: hidden;
+}
+h1:hover .anchor-link,
+h2:hover .anchor-link,
+h3:hover .anchor-link,
+h4:hover .anchor-link,
+h5:hover .anchor-link,
+h6:hover .anchor-link {
+  visibility: visible;
+}
+.text_cell.rendered .input_area {
+  display: none;
+}
+.text_cell.rendered 
+.text_cell.rendered .rendered_html tr,
+.text_cell.rendered .rendered_html th,
+.text_cell.rendered 
+.text_cell.unrendered .text_cell_render {
+  display: none;
+}
+.text_cell .dropzone .input_area {
+  border: 2px dashed #bababa;
+  margin: -1px;
+}
+.cm-header-1,
+.cm-header-2,
+.cm-header-3,
+.cm-header-4,
+.cm-header-5,
+.cm-header-6 {
+  font-weight: bold;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+.cm-header-1 {
+  font-size: 185.7%;
+}
+.cm-header-2 {
+  font-size: 157.1%;
+}
+.cm-header-3 {
+  font-size: 128.6%;
+}
+.cm-header-4 {
+  font-size: 110%;
+}
+.cm-header-5 {
+  font-size: 100%;
+  font-style: italic;
+}
+.cm-header-6 {
+  font-size: 100%;
+  font-style: italic;
+}
+</style>
+<style type="text/css">.highlight .hll { background-color: #ffffcc }
+.highlight  { background: #f8f8f8; }
+.highlight .c { color: #408080; font-style: italic } /* Comment */
+.highlight .err { border: 1px solid #FF0000 } /* Error */
+.highlight .k { color: #008000; font-weight: bold } /* Keyword */
+.highlight .o { color: #666666 } /* Operator */
+.highlight .ch { color: #408080; font-style: italic } /* Comment.Hashbang */
+.highlight .cm { color: #408080; font-style: italic } /* Comment.Multiline */
+.highlight .cp { color: #BC7A00 } /* Comment.Preproc */
+.highlight .cpf { color: #408080; font-style: italic } /* Comment.PreprocFile */
+.highlight .c1 { color: #408080; font-style: italic } /* Comment.Single */
+.highlight .cs { color: #408080; font-style: italic } /* Comment.Special */
+.highlight .gd { color: #A00000 } /* Generic.Deleted */
+.highlight .ge { font-style: italic } /* Generic.Emph */
+.highlight .gr { color: #FF0000 } /* Generic.Error */
+.highlight .gh { color: #000080; font-weight: bold } /* Generic.Heading */
+.highlight .gi { color: #00A000 } /* Generic.Inserted */
+.highlight .go { color: #888888 } /* Generic.Output */
+.highlight .gp { color: #000080; font-weight: bold } /* Generic.Prompt */
+.highlight .gs { font-weight: bold } /* Generic.Strong */
+.highlight .gu { color: #800080; font-weight: bold } /* Generic.Subheading */
+.highlight .gt { color: #0044DD } /* Generic.Traceback */
+.highlight .kc { color: #008000; font-weight: bold } /* Keyword.Constant */
+.highlight .kd { color: #008000; font-weight: bold } /* Keyword.Declaration */
+.highlight .kn { color: #008000; font-weight: bold } /* Keyword.Namespace */
+.highlight .kp { color: #008000 } /* Keyword.Pseudo */
+.highlight .kr { color: #008000; font-weight: bold } /* Keyword.Reserved */
+.highlight .kt { color: #B00040 } /* Keyword.Type */
+.highlight .m { color: #666666 } /* Literal.Number */
+.highlight .s { color: #BA2121 } /* Literal.String */
+.highlight .na { color: #7D9029 } /* Name.Attribute */
+.highlight .nb { color: #008000 } /* Name.Builtin */
+.highlight .nc { color: #0000FF; font-weight: bold } /* Name.Class */
+.highlight .no { color: #880000 } /* Name.Constant */
+.highlight .nd { color: #AA22FF } /* Name.Decorator */
+.highlight .ni { color: #999999; font-weight: bold } /* Name.Entity */
+.highlight .ne { color: #D2413A; font-weight: bold } /* Name.Exception */
+.highlight .nf { color: #0000FF } /* Name.Function */
+.highlight .nl { color: #A0A000 } /* Name.Label */
+.highlight .nn { color: #0000FF; font-weight: bold } /* Name.Namespace */
+.highlight .nt { color: #008000; font-weight: bold } /* Name.Tag */
+.highlight .nv { color: #19177C } /* Name.Variable */
+.highlight .ow { color: #AA22FF; font-weight: bold } /* Operator.Word */
+.highlight .w { color: #bbbbbb } /* Text.Whitespace */
+.highlight .mb { color: #666666 } /* Literal.Number.Bin */
+.highlight .mf { color: #666666 } /* Literal.Number.Float */
+.highlight .mh { color: #666666 } /* Literal.Number.Hex */
+.highlight .mi { color: #666666 } /* Literal.Number.Integer */
+.highlight .mo { color: #666666 } /* Literal.Number.Oct */
+.highlight .sa { color: #BA2121 } /* Literal.String.Affix */
+.highlight .sb { color: #BA2121 } /* Literal.String.Backtick */
+.highlight .sc { color: #BA2121 } /* Literal.String.Char */
+.highlight .dl { color: #BA2121 } /* Literal.String.Delimiter */
+.highlight .sd { color: #BA2121; font-style: italic } /* Literal.String.Doc */
+.highlight .s2 { color: #BA2121 } /* Literal.String.Double */
+.highlight .se { color: #BB6622; font-weight: bold } /* Literal.String.Escape */
+.highlight .sh { color: #BA2121 } /* Literal.String.Heredoc */
+.highlight .si { color: #BB6688; font-weight: bold } /* Literal.String.Interpol */
+.highlight .sx { color: #008000 } /* Literal.String.Other */
+.highlight .sr { color: #BB6688 } /* Literal.String.Regex */
+.highlight .s1 { color: #BA2121 } /* Literal.String.Single */
+.highlight .ss { color: #19177C } /* Literal.String.Symbol */
+.highlight .bp { color: #008000 } /* Name.Builtin.Pseudo */
+.highlight .fm { color: #0000FF } /* Name.Function.Magic */
+.highlight .vc { color: #19177C } /* Name.Variable.Class */
+.highlight .vg { color: #19177C } /* Name.Variable.Global */
+.highlight .vi { color: #19177C } /* Name.Variable.Instance */
+.highlight .vm { color: #19177C } /* Name.Variable.Magic */
+.highlight .il { color: #666666 } /* Literal.Number.Integer.Long */</style>
+<style type="text/css">
+/* Temporary definitions which will become obsolete with Notebook release 5.0 */
+.ansi-black-fg { color: #3E424D; }
+.ansi-black-bg { background-color: #3E424D; }
+.ansi-black-intense-fg { color: #282C36; }
+.ansi-black-intense-bg { background-color: #282C36; }
+.ansi-red-fg { color: #E75C58; }
+.ansi-red-bg { background-color: #E75C58; }
+.ansi-red-intense-fg { color: #B22B31; }
+.ansi-red-intense-bg { background-color: #B22B31; }
+.ansi-green-fg { color: #00A250; }
+.ansi-green-bg { background-color: #00A250; }
+.ansi-green-intense-fg { color: #007427; }
+.ansi-green-intense-bg { background-color: #007427; }
+.ansi-yellow-fg { color: #DDB62B; }
+.ansi-yellow-bg { background-color: #DDB62B; }
+.ansi-yellow-intense-fg { color: #B27D12; }
+.ansi-yellow-intense-bg { background-color: #B27D12; }
+.ansi-blue-fg { color: #208FFB; }
+.ansi-blue-bg { background-color: #208FFB; }
+.ansi-blue-intense-fg { color: #0065CA; }
+.ansi-blue-intense-bg { background-color: #0065CA; }
+.ansi-magenta-fg { color: #D160C4; }
+.ansi-magenta-bg { background-color: #D160C4; }
+.ansi-magenta-intense-fg { color: #A03196; }
+.ansi-magenta-intense-bg { background-color: #A03196; }
+.ansi-cyan-fg { color: #60C6C8; }
+.ansi-cyan-bg { background-color: #60C6C8; }
+.ansi-cyan-intense-fg { color: #258F8F; }
+.ansi-cyan-intense-bg { background-color: #258F8F; }
+.ansi-white-fg { color: #C5C1B4; }
+.ansi-white-bg { background-color: #C5C1B4; }
+.ansi-white-intense-fg { color: #A1A6B2; }
+.ansi-white-intense-bg { background-color: #A1A6B2; }
+
+.ansi-bold { font-weight: bold; }
+</style>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>This project utilizes publicly available data to recommend 10 similar suburbs in Australia to a given suburb. This could be useful for people trying to decide where to work, rent or buy property. For example, it could be used on property search websites; a person searches for property in a given suburb and is provided a list of similar suburbs to consider buying in.
+There are three primary data points used to determine how similar other suburbs are to the given suburb;</p>
+<ol>
+<li>Foursquare Places API -  current data on the venues (cafes, restaurants, parks, amenities etc) most often found in the suburb</li>
+<li>Australian Bureau of Statistics API – data on the cultural background (i.e. ancestry) of the people in the suburb</li>
+<li>RealestateVIEW.com.au – Age and income demographics of the suburb</li>
+</ol>
+<p>For example, given the suburb ‘Brunswick West’ (my home suburb in Melbourne) the engine provides 10 suburbs which have similar venues (typically cafes, pubs and Middle Eastern restaurants), similar age and income residents (older middle class), and similar cultural heritage (English, Italian, Greek).</p>
+<p>It utilizes K-Means clustering from Scikit-learn to cluster venue and cultural data, the pandasdmx package to interface with the Australian Bureau of Statistics API, and the Beautiful Soup package to scrape demographic information from the web.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#pandasdmx is used when calling the Australian Bureau of Statistics API</span>
+<span class="o">!</span>pip install pandasdmx
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Collecting pandasdmx
+  Downloading https://files.pythonhosted.org/packages/e7/5d/7e29616b0376d0a15eb3013c909c4e9021b6c6e244ef1b48817b4d0c4d46/pandaSDMX-0.9-py2.py3-none-any.whl (45kB)
+     |████████████████████████████████| 51kB 13.8MB/s eta 0:00:01
+Requirement already satisfied: lxml in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandasdmx) (4.3.1)
+Requirement already satisfied: pandas in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandasdmx) (0.24.1)
+Collecting jsonpath-rw (from pandasdmx)
+  Downloading https://files.pythonhosted.org/packages/71/7c/45001b1f19af8c4478489fbae4fc657b21c4c669d7a5a036a86882581d85/jsonpath-rw-1.4.0.tar.gz
+Requirement already satisfied: setuptools in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandasdmx) (40.8.0)
+Requirement already satisfied: requests in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandasdmx) (2.21.0)
+Requirement already satisfied: python-dateutil&gt;=2.5.0 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandas-&gt;pandasdmx) (2.7.5)
+Requirement already satisfied: numpy&gt;=1.12.0 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandas-&gt;pandasdmx) (1.15.4)
+Requirement already satisfied: pytz&gt;=2011k in /opt/conda/envs/Python36/lib/python3.6/site-packages (from pandas-&gt;pandasdmx) (2018.9)
+Requirement already satisfied: ply in /opt/conda/envs/Python36/lib/python3.6/site-packages (from jsonpath-rw-&gt;pandasdmx) (3.11)
+Requirement already satisfied: decorator in /opt/conda/envs/Python36/lib/python3.6/site-packages (from jsonpath-rw-&gt;pandasdmx) (4.3.2)
+Requirement already satisfied: six in /opt/conda/envs/Python36/lib/python3.6/site-packages (from jsonpath-rw-&gt;pandasdmx) (1.12.0)
+Requirement already satisfied: idna&lt;2.9,&gt;=2.5 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;pandasdmx) (2.8)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;pandasdmx) (2019.6.16)
+Requirement already satisfied: chardet&lt;3.1.0,&gt;=3.0.2 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;pandasdmx) (3.0.4)
+Requirement already satisfied: urllib3&lt;1.25,&gt;=1.21.1 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;pandasdmx) (1.24.1)
+Building wheels for collected packages: jsonpath-rw
+  Building wheel for jsonpath-rw (setup.py) ... done
+  Stored in directory: /home/dsxuser/.cache/pip/wheels/5c/00/9a/82822db383c2d96dcebf839786665a185f92d37e5026f9806f
+Successfully built jsonpath-rw
+Installing collected packages: jsonpath-rw, pandasdmx
+Successfully installed jsonpath-rw-1.4.0 pandasdmx-0.9
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">json</span> <span class="c1"># library to handle JSON files</span>
+<span class="kn">from</span> <span class="nn">pandas.io.json</span> <span class="k">import</span> <span class="n">json_normalize</span> <span class="c1"># tranform JSON file into a pandas dataframe</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
+<span class="kn">from</span> <span class="nn">pandasdmx</span> <span class="k">import</span> <span class="n">Request</span>
+<span class="kn">from</span> <span class="nn">bs4</span> <span class="k">import</span> <span class="n">BeautifulSoup</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Get-suburb-and-postcode-data">Get suburb and postcode data<a class="anchor-link" href="#Get-suburb-and-postcode-data">&#182;</a></h2><p>List of Australian postcodes and suburbs are available online on many websites. I've replicated the file from <a href="http://www.corra.com.au/australian-postcode-location-data/">http://www.corra.com.au/australian-postcode-location-data/</a> on Github</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">filename</span> <span class="o">=</span> <span class="s2">&quot;https://raw.githubusercontent.com/DataistDogma/Coursera_Capstone/master/Australian_Post_Codes_Lat_Lon/Australian_Post_Codes_Lat_Lon.csv&quot;</span>
+<span class="n">postcodes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Postcodes shape: &quot;</span><span class="p">,</span> <span class="n">postcodes</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">postcodes</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Postcodes shape:  (16080, 7)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>dc</th>
+      <th>type</th>
+      <th>lat</th>
+      <th>lon</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>200</td>
+      <td>AUSTRALIAN NATIONAL UNIVERSITY</td>
+      <td>ACT</td>
+      <td>AUSTRALIAN NATIONAL UNI LPO</td>
+      <td>Post Office Boxes</td>
+      <td>-35.277272</td>
+      <td>149.117136</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>221</td>
+      <td>BARTON</td>
+      <td>ACT</td>
+      <td>NaN</td>
+      <td>LVR</td>
+      <td>-35.201372</td>
+      <td>149.095065</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>800</td>
+      <td>DARWIN</td>
+      <td>NT</td>
+      <td>DARWIN DELIVERY CENTRE</td>
+      <td>Delivery Area</td>
+      <td>-12.801028</td>
+      <td>130.955789</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>801</td>
+      <td>DARWIN</td>
+      <td>NT</td>
+      <td>DARWIN DELIVERY CENTRE</td>
+      <td>Post Office Boxes</td>
+      <td>-12.801028</td>
+      <td>130.955789</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>804</td>
+      <td>PARAP</td>
+      <td>NT</td>
+      <td>PARAP</td>
+      <td>Post Office Boxes</td>
+      <td>-12.432181</td>
+      <td>130.843310</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Each row represents a Distribution Centre (dc) rather than a suburb or postcode. We're looking for a list of unique suburbs, so we'll filter the dataframe for unique suburbs and remove the 'dc' and 'type' column, which we don't need</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">postcodes</span><span class="o">.</span><span class="n">drop_duplicates</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="s1">&#39;suburb&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">postcodes</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;dc&#39;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span> <span class="p">)</span>
+<span class="n">postcodes</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#drop the trailing row which has no data</span>
+<span class="n">postcodes</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#reinex after having removed some rows above</span>
+<span class="n">postcodes</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[12]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(14269, 5)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>For simplicity we'll also create a smaller subset of suburbs, being those in Metropolitan Melbourne, the second-largest city in Australia. The postcode range for Melbourne are postcode between 3000-3207 &amp; 8000-8499</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">melb_postcodes</span> <span class="o">=</span> <span class="n">postcodes</span><span class="p">[(</span><span class="n">postcodes</span><span class="p">[</span><span class="s1">&#39;postcode&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">3000</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">postcodes</span><span class="p">[</span><span class="s1">&#39;postcode&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">3207</span><span class="p">)</span><span class="o">|</span><span class="p">(</span><span class="n">postcodes</span><span class="p">[</span><span class="s1">&#39;postcode&#39;</span><span class="p">]</span><span class="o">&gt;=</span><span class="mi">8000</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">postcodes</span><span class="p">[</span><span class="s1">&#39;postcode&#39;</span><span class="p">]</span><span class="o">&lt;=</span><span class="mi">8499</span><span class="p">)]</span>
+<span class="n">melb_postcodes</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>lat</th>
+      <th>lon</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>4901</th>
+      <td>3000</td>
+      <td>MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.814563</td>
+      <td>144.970267</td>
+    </tr>
+    <tr>
+      <th>4902</th>
+      <td>3002</td>
+      <td>EAST MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.816640</td>
+      <td>144.987811</td>
+    </tr>
+    <tr>
+      <th>4903</th>
+      <td>3003</td>
+      <td>WEST MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.806255</td>
+      <td>144.941123</td>
+    </tr>
+    <tr>
+      <th>4904</th>
+      <td>3005</td>
+      <td>WORLD TRADE CENTRE</td>
+      <td>VIC</td>
+      <td>-37.822262</td>
+      <td>144.954856</td>
+    </tr>
+    <tr>
+      <th>4905</th>
+      <td>3006</td>
+      <td>SOUTHBANK</td>
+      <td>VIC</td>
+      <td>-37.823258</td>
+      <td>144.965926</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Assign-venue-clusters">Assign venue clusters<a class="anchor-link" href="#Assign-venue-clusters">&#182;</a></h2><p>Use the Foursquare API to get venue recommendations for each suburb and then use K-means to assign a venue cluster to the suburb based on the recommendations returned</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#intialise Foursquare API credentials</span>
+<span class="n">CLIENT_ID</span> <span class="o">=</span> <span class="s1">&#39;EKC0OWGJC1SY1AE1UHB4PUPH2JGARZTQK1U5C1USTUNA43JF&#39;</span> <span class="c1"># your Foursquare ID</span>
+<span class="n">CLIENT_SECRET</span> <span class="o">=</span> <span class="s1">&#39;CHH0EPUEN2PH4WBDV4XHTDT5NWTUZ2SYVIQALUOZXWYNABRO&#39;</span> <span class="c1"># your Foursquare Secret</span>
+<span class="n">VERSION</span> <span class="o">=</span> <span class="s1">&#39;20180605&#39;</span> <span class="c1"># Foursquare API version</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Use the function to extract the category from the dataframe (because the column name could be either &#39;categories&#39; or &#39;venue.categories&#39;)</span>
+<span class="k">def</span> <span class="nf">get_category_type</span><span class="p">(</span><span class="n">row</span><span class="p">):</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">categories_list</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;categories&#39;</span><span class="p">]</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="n">categories_list</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s1">&#39;venue.categories&#39;</span><span class="p">]</span>
+        
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">categories_list</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">categories_list</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#define a function to return all the venues for a given neighborhood</span>
+
+<span class="c1">#pass the neighborhood (nb), the latitude (la), the radius and the limit </span>
+<span class="k">def</span> <span class="nf">get_venues</span><span class="p">(</span><span class="n">nb</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">radius</span><span class="p">,</span> <span class="n">limit</span><span class="p">):</span>
+    
+    <span class="c1">#print(nb)</span>
+    
+    <span class="c1">#form the request url and request only the items (which are the venues)</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s1">&#39;https://api.foursquare.com/v2/venues/explore?client_id=</span><span class="si">{}</span><span class="s1">&amp;client_secret=</span><span class="si">{}</span><span class="s1">&amp;ll=</span><span class="si">{}</span><span class="s1">,</span><span class="si">{}</span><span class="s1">&amp;v=</span><span class="si">{}</span><span class="s1">&amp;limit=</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">CLIENT_ID</span><span class="p">,</span> <span class="n">CLIENT_SECRET</span><span class="p">,</span> <span class="n">la</span><span class="p">,</span> <span class="n">lo</span><span class="p">,</span> <span class="n">VERSION</span><span class="p">,</span> <span class="n">limit</span><span class="p">)</span>
+    <span class="n">items</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;response&quot;</span><span class="p">][</span><span class="s1">&#39;groups&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;items&#39;</span><span class="p">]</span>
+    
+    <span class="c1">#include exception handling where Foursquare request fails for a particular Neighbourhood</span>
+    <span class="k">if</span> <span class="n">items</span> <span class="o">==</span> <span class="p">[]:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; -- Foursquare request for &quot;</span><span class="p">,</span><span class="n">nb</span><span class="p">,</span><span class="s2">&quot;returned no results --&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># flatten JSON, filter for only wanted columns then use the get_category_type funtion to replace the category list with just the category.</span>
+        <span class="n">venues1</span> <span class="o">=</span> <span class="n">json_normalize</span><span class="p">(</span><span class="n">items</span><span class="p">)</span>
+        <span class="n">filtered_columns</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;venue.name&#39;</span><span class="p">,</span> <span class="s1">&#39;venue.categories&#39;</span><span class="p">,</span> <span class="s1">&#39;venue.location.lat&#39;</span><span class="p">,</span> <span class="s1">&#39;venue.location.lng&#39;</span><span class="p">]</span>
+        <span class="n">venues1</span> <span class="o">=</span><span class="n">venues1</span><span class="o">.</span><span class="n">loc</span><span class="p">[:,</span> <span class="n">filtered_columns</span><span class="p">]</span>
+        <span class="n">venues1</span><span class="p">[</span><span class="s1">&#39;venue.categories&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">venues1</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">get_category_type</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1">#define a new dataframe with the Neighbourhood information</span>
+        <span class="n">venues2</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Suburb&#39;</span><span class="p">,</span><span class="s1">&#39;Suburb Latitude&#39;</span><span class="p">,</span> 
+                      <span class="s1">&#39;Suburb Longitude&#39;</span><span class="p">])</span> 
+
+        <span class="c1">#for each of the venues returned, add the venue dataframe to the (empty) neighbourhood dataframe and fill all rows in the the neighbourhood columns with the neighborhood name, the neighbourhood latitude and longitude</span>
+        <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">venues1</span><span class="p">:</span>
+            <span class="n">venues2</span><span class="p">[</span><span class="n">row</span><span class="p">]</span><span class="o">=</span><span class="n">venues1</span><span class="p">[</span><span class="n">row</span><span class="p">]</span>
+            <span class="n">venues2</span><span class="p">[</span><span class="s1">&#39;Suburb&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">nb</span>
+            <span class="n">venues2</span><span class="p">[</span><span class="s1">&#39;Suburb Latitude&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">la</span>
+            <span class="n">venues2</span><span class="p">[</span><span class="s1">&#39;Suburb Longitude&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">lo</span>
+            <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+
+        <span class="c1">#rename the columns</span>
+        <span class="n">venues2</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="nb">str</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;venue.name&quot;</span><span class="p">:</span><span class="s2">&quot;Venue&quot;</span><span class="p">,</span><span class="s2">&quot;venue.categories&quot;</span><span class="p">:</span><span class="s2">&quot;Venue Category&quot;</span><span class="p">,</span><span class="s2">&quot;venue.location.lat&quot;</span><span class="p">:</span><span class="s2">&quot;Venue Latitude&quot;</span><span class="p">,</span><span class="s2">&quot;venue.location.lng&quot;</span><span class="p">:</span><span class="s2">&quot;Venue Longitude&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    
+    <span class="k">return</span> <span class="n">venues2</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#test out the get_venues function</span>
+<span class="n">row</span> <span class="o">=</span> <span class="mi">300</span>
+<span class="n">n</span> <span class="o">=</span> <span class="n">postcodes</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span>
+<span class="n">n_lat</span> <span class="o">=</span> <span class="n">postcodes</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="s1">&#39;lat&#39;</span><span class="p">]</span>
+<span class="n">n_long</span> <span class="o">=</span> <span class="n">postcodes</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="s1">&#39;lon&#39;</span><span class="p">]</span>
+
+<span class="n">df2</span><span class="o">=</span><span class="n">get_venues</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">n_lat</span><span class="p">,</span> <span class="n">n_long</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">df2</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Suburb</th>
+      <th>Suburb Latitude</th>
+      <th>Suburb Longitude</th>
+      <th>Venue</th>
+      <th>Venue Category</th>
+      <th>Venue Latitude</th>
+      <th>Venue Longitude</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>LANE COVE WEST</td>
+      <td>-33.806246</td>
+      <td>151.153281</td>
+      <td>Lane Cove Aquatic Centre</td>
+      <td>Pool</td>
+      <td>-33.813591</td>
+      <td>151.171442</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>LANE COVE WEST</td>
+      <td>-33.806246</td>
+      <td>151.153281</td>
+      <td>Via Napoli Pizzeria</td>
+      <td>Pizza Place</td>
+      <td>-33.815597</td>
+      <td>151.169879</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>LANE COVE WEST</td>
+      <td>-33.806246</td>
+      <td>151.153281</td>
+      <td>Lane Cove National Park</td>
+      <td>Park</td>
+      <td>-33.792008</td>
+      <td>151.152327</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>LANE COVE WEST</td>
+      <td>-33.806246</td>
+      <td>151.153281</td>
+      <td>North Shore Gym</td>
+      <td>Gym</td>
+      <td>-33.814679</td>
+      <td>151.169105</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>LANE COVE WEST</td>
+      <td>-33.806246</td>
+      <td>151.153281</td>
+      <td>Fourno</td>
+      <td>Café</td>
+      <td>-33.795317</td>
+      <td>151.143533</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Iterate thorough all the suburbs of the dataframe df, adding each set of venues to the df_suburb_venues dataframe</span>
+<span class="n">df</span><span class="o">=</span><span class="n">melb_postcodes</span>
+<span class="n">df_suburb_venues</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">()</span>
+<span class="n">radius</span> <span class="o">=</span> <span class="mi">500</span>
+<span class="n">limit</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Getting venue recommendations, please wait......&quot;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">df</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]):</span>
+        <span class="n">df_suburb_venues</span><span class="o">=</span><span class="n">df_suburb_venues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">get_venues</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;suburb&#39;</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">df</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">radius</span><span class="p">,</span> <span class="n">limit</span><span class="p">),</span><span class="n">ignore_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;...... Complete&quot;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Getting venue recommendations, please wait......
+...... Complete
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">counts</span> <span class="o">=</span> <span class="n">df_suburb_venues</span><span class="p">[</span><span class="s1">&#39;Venue Category&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value_counts</span><span class="p">()</span>
+<span class="n">counts</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[19]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>Café                    6132
+Fast Food Restaurant    1723
+Grocery Store           1455
+Supermarket             1426
+Sandwich Place          1018
+Coffee Shop              917
+Shopping Mall            800
+Park                     794
+Pizza Place              774
+Pub                      773
+Name: Venue Category, dtype: int64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Prepare the data for clustering using one-hot encoding</span>
+<span class="n">df_onehot</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">get_dummies</span><span class="p">(</span><span class="n">df_suburb_venues</span><span class="p">[</span><span class="s1">&#39;Venue Category&#39;</span><span class="p">])</span>
+<span class="c1">#insert a new column for the Neighbourhood values (note that immediately reusing the &#39;Neighborhood&#39; name causes as error as you can&#39;t add a Neighourhood column that already exists, so renamed the column post the insert)</span>
+<span class="n">df_onehot</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s2">&quot;New&quot;</span><span class="p">,</span><span class="n">df_suburb_venues</span><span class="p">[</span><span class="s1">&#39;Suburb&#39;</span><span class="p">])</span>
+<span class="n">df_onehot</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;New&#39;</span><span class="p">:</span><span class="s1">&#39;Suburb&#39;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1">#get the mean frequency occurance</span>
+<span class="n">df_onehot</span> <span class="o">=</span> <span class="n">df_onehot</span><span class="o">.</span><span class="n">groupby</span><span class="p">(</span><span class="s2">&quot;Suburb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">reset_index</span><span class="p">()</span>
+<span class="n">df_onehot</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[20]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Suburb</th>
+      <th>Accessories Store</th>
+      <th>Adult Boutique</th>
+      <th>Afghan Restaurant</th>
+      <th>African Restaurant</th>
+      <th>Airport</th>
+      <th>Airport Lounge</th>
+      <th>Airport Service</th>
+      <th>Airport Terminal</th>
+      <th>American Restaurant</th>
+      <th>...</th>
+      <th>Wine Bar</th>
+      <th>Wine Shop</th>
+      <th>Winery</th>
+      <th>Wings Joint</th>
+      <th>Women's Store</th>
+      <th>Xinjiang Restaurant</th>
+      <th>Yoga Studio</th>
+      <th>Yunnan Restaurant</th>
+      <th>Zoo</th>
+      <th>Zoo Exhibit</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ABECKETT STREET</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.010000</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ABERFELDIE</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>AIRPORT WEST</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.01087</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.000000</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ALBANVALE</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.010417</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.010417</td>
+      <td>0.00</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ALBERT PARK</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.000000</td>
+      <td>0.0</td>
+      <td>0.00000</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>...</td>
+      <td>0.010000</td>
+      <td>0.01</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+      <td>0.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 338 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[21]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#put the top10 into a dataframe</span>
+<span class="n">df_topvenues</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Suburb&#39;</span><span class="p">,</span><span class="s1">&#39;#1&#39;</span><span class="p">,</span><span class="s1">&#39;#2&#39;</span><span class="p">,</span><span class="s1">&#39;#3&#39;</span><span class="p">,</span><span class="s1">&#39;#4&#39;</span><span class="p">,</span><span class="s1">&#39;#5&#39;</span><span class="p">,</span><span class="s1">&#39;#6&#39;</span><span class="p">,</span><span class="s1">&#39;#7&#39;</span><span class="p">,</span><span class="s1">&#39;#8&#39;</span><span class="p">,</span><span class="s1">&#39;#9&#39;</span><span class="p">,</span><span class="s1">&#39;#10&#39;</span><span class="p">])</span>
+
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="nb">len</span><span class="p">(</span><span class="n">df_onehot</span><span class="p">)):</span>
+    <span class="n">suburb</span> <span class="o">=</span> <span class="n">df_onehot</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">topten</span> <span class="o">=</span> <span class="n">df_onehot</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">row</span><span class="p">][</span><span class="mi">1</span><span class="p">:]</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">ascending</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+    <span class="n">temp</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([[</span><span class="n">suburb</span><span class="p">,</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">4</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">5</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">6</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">7</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">8</span><span class="p">],</span><span class="n">topten</span><span class="o">.</span><span class="n">index</span><span class="p">[</span><span class="mi">9</span><span class="p">]]],</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Suburb&#39;</span><span class="p">,</span><span class="s1">&#39;#1&#39;</span><span class="p">,</span><span class="s1">&#39;#2&#39;</span><span class="p">,</span><span class="s1">&#39;#3&#39;</span><span class="p">,</span><span class="s1">&#39;#4&#39;</span><span class="p">,</span><span class="s1">&#39;#5&#39;</span><span class="p">,</span><span class="s1">&#39;#6&#39;</span><span class="p">,</span><span class="s1">&#39;#7&#39;</span><span class="p">,</span><span class="s1">&#39;#8&#39;</span><span class="p">,</span><span class="s1">&#39;#9&#39;</span><span class="p">,</span><span class="s1">&#39;#10&#39;</span><span class="p">])</span>
+    <span class="n">df_topvenues</span><span class="o">=</span><span class="n">df_topvenues</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+<span class="n">df_topvenues</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">df_topvenues</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[21]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>Suburb</th>
+      <th>#1</th>
+      <th>#2</th>
+      <th>#3</th>
+      <th>#4</th>
+      <th>#5</th>
+      <th>#6</th>
+      <th>#7</th>
+      <th>#8</th>
+      <th>#9</th>
+      <th>#10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>ABECKETT STREET</td>
+      <td>Korean Restaurant</td>
+      <td>Café</td>
+      <td>Coffee Shop</td>
+      <td>Japanese Restaurant</td>
+      <td>Bar</td>
+      <td>Bubble Tea Shop</td>
+      <td>Indonesian Restaurant</td>
+      <td>Donut Shop</td>
+      <td>Burger Joint</td>
+      <td>Fast Food Restaurant</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>ABERFELDIE</td>
+      <td>Café</td>
+      <td>Electronics Store</td>
+      <td>Grocery Store</td>
+      <td>Gym</td>
+      <td>Bakery</td>
+      <td>Coffee Shop</td>
+      <td>Shopping Mall</td>
+      <td>Pub</td>
+      <td>Japanese Restaurant</td>
+      <td>Pizza Place</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>AIRPORT WEST</td>
+      <td>Fast Food Restaurant</td>
+      <td>Supermarket</td>
+      <td>Café</td>
+      <td>Sandwich Place</td>
+      <td>Grocery Store</td>
+      <td>Portuguese Restaurant</td>
+      <td>Convenience Store</td>
+      <td>Middle Eastern Restaurant</td>
+      <td>Shopping Mall</td>
+      <td>Electronics Store</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>ALBANVALE</td>
+      <td>Fast Food Restaurant</td>
+      <td>Portuguese Restaurant</td>
+      <td>Café</td>
+      <td>Supermarket</td>
+      <td>Grocery Store</td>
+      <td>Bakery</td>
+      <td>Shopping Mall</td>
+      <td>Vietnamese Restaurant</td>
+      <td>Pizza Place</td>
+      <td>Chinese Restaurant</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>ALBERT PARK</td>
+      <td>Café</td>
+      <td>Pub</td>
+      <td>Japanese Restaurant</td>
+      <td>Gastropub</td>
+      <td>Burger Joint</td>
+      <td>Coffee Shop</td>
+      <td>Beach</td>
+      <td>Bakery</td>
+      <td>Fish &amp; Chips Shop</td>
+      <td>Breakfast Spot</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h3 id="Assign-a-cluster-based-on-the-recommendations-using-the-k-means-clustering-algorithm-from-Scikit-Learn">Assign a cluster based on the recommendations using the k-means clustering algorithm from Scikit Learn<a class="anchor-link" href="#Assign-a-cluster-based-on-the-recommendations-using-the-k-means-clustering-algorithm-from-Scikit-Learn">&#182;</a></h3>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[22]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># import k-means</span>
+<span class="kn">from</span> <span class="nn">sklearn.cluster</span> <span class="k">import</span> <span class="n">KMeans</span>
+
+<span class="n">df_clustering</span> <span class="o">=</span> <span class="n">df_onehot</span><span class="o">.</span><span class="n">drop</span><span class="p">(</span><span class="s1">&#39;Suburb&#39;</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># set number of clusters</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">5</span>
+
+<span class="c1"># run k-means clustering</span>
+<span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df_clustering</span><span class="p">)</span>
+
+<span class="c1"># check cluster labels generated for each row in the dataframe</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">100</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[22]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([0, 3, 4, 4, 3, 4, 3, 1, 3, 3, 2, 3, 4, 3, 3, 3, 3, 1, 1, 1, 2, 4,
+       3, 4, 3, 3, 3, 3, 4, 1, 1, 2, 2, 3, 2, 1, 1, 1, 1, 1, 2, 1, 1, 3,
+       1, 3, 3, 1, 1, 1, 2, 2, 1, 1, 3, 1, 1, 1, 1, 1, 3, 3, 3, 3, 4, 0,
+       0, 0, 3, 0, 0, 1, 2, 3, 3, 4, 4, 2, 4, 4, 3, 3, 3, 3, 4, 0, 0, 1,
+       4, 2, 2, 3, 3, 2, 3, 3, 3, 1, 1, 3], dtype=int32)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[23]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_topvenues</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;Venues Cluster&#39;</span><span class="p">,</span><span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[24]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_merged</span> <span class="o">=</span> <span class="n">postcodes</span>
+
+<span class="n">df_merged</span> <span class="o">=</span> <span class="n">df_merged</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df_topvenues</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;Suburb&#39;</span><span class="p">),</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;suburb&#39;</span><span class="p">)</span>
+
+<span class="c1">#drop rows with no clusters</span>
+<span class="n">df_melbourne_merged</span> <span class="o">=</span> <span class="n">df_merged</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">subset</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;Venues Cluster&#39;</span><span class="p">])</span>
+<span class="n">df_melbourne_merged</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[24]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>lat</th>
+      <th>lon</th>
+      <th>Venues Cluster</th>
+      <th>#1</th>
+      <th>#2</th>
+      <th>#3</th>
+      <th>#4</th>
+      <th>#5</th>
+      <th>#6</th>
+      <th>#7</th>
+      <th>#8</th>
+      <th>#9</th>
+      <th>#10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>4901</th>
+      <td>3000</td>
+      <td>MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.814563</td>
+      <td>144.970267</td>
+      <td>0.0</td>
+      <td>Cocktail Bar</td>
+      <td>Italian Restaurant</td>
+      <td>Coffee Shop</td>
+      <td>Café</td>
+      <td>Japanese Restaurant</td>
+      <td>Hotel</td>
+      <td>Asian Restaurant</td>
+      <td>Sandwich Place</td>
+      <td>French Restaurant</td>
+      <td>BBQ Joint</td>
+    </tr>
+    <tr>
+      <th>4902</th>
+      <td>3002</td>
+      <td>EAST MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.816640</td>
+      <td>144.987811</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Vietnamese Restaurant</td>
+      <td>Cricket Ground</td>
+      <td>Tennis Stadium</td>
+      <td>Park</td>
+      <td>Breakfast Spot</td>
+      <td>Bakery</td>
+      <td>Vegetarian / Vegan Restaurant</td>
+      <td>Football Stadium</td>
+      <td>Thai Restaurant</td>
+    </tr>
+    <tr>
+      <th>4903</th>
+      <td>3003</td>
+      <td>WEST MELBOURNE</td>
+      <td>VIC</td>
+      <td>-37.806255</td>
+      <td>144.941123</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Korean Restaurant</td>
+      <td>Bar</td>
+      <td>Hotel</td>
+      <td>Middle Eastern Restaurant</td>
+      <td>Sandwich Place</td>
+      <td>Shopping Mall</td>
+      <td>Bakery</td>
+      <td>Burger Joint</td>
+      <td>Asian Restaurant</td>
+    </tr>
+    <tr>
+      <th>4904</th>
+      <td>3005</td>
+      <td>WORLD TRADE CENTRE</td>
+      <td>VIC</td>
+      <td>-37.822262</td>
+      <td>144.954856</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Japanese Restaurant</td>
+      <td>Coffee Shop</td>
+      <td>Hotel</td>
+      <td>Bar</td>
+      <td>French Restaurant</td>
+      <td>Steakhouse</td>
+      <td>Restaurant</td>
+      <td>Italian Restaurant</td>
+      <td>Australian Restaurant</td>
+    </tr>
+    <tr>
+      <th>4905</th>
+      <td>3006</td>
+      <td>SOUTHBANK</td>
+      <td>VIC</td>
+      <td>-37.823258</td>
+      <td>144.965926</td>
+      <td>0.0</td>
+      <td>Bar</td>
+      <td>Theater</td>
+      <td>Hotel</td>
+      <td>Italian Restaurant</td>
+      <td>Performing Arts Venue</td>
+      <td>Park</td>
+      <td>Japanese Restaurant</td>
+      <td>Café</td>
+      <td>Australian Restaurant</td>
+      <td>Burger Joint</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Assign-cultural-clusters">Assign cultural clusters<a class="anchor-link" href="#Assign-cultural-clusters">&#182;</a></h1><p>Use the Australian Beaureu of Statistics API to get a breakdown on the ancestry for the suburb suburb and then use K-means to assign a venue cluster suburbs with similar ancestry</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[25]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#create the url which returns the ABS cencus data for the year 2011 for the question T09 - Ancestry by birthplace of parents</span>
+<span class="n">allvic_url</span><span class="o">=</span><span class="s1">&#39;ABS_CENSUS2011_T09/TOT+1+2+3+4+Z.TOT+TOTP+1101+1102+6101+3204+2303+2101+5201+2305+2306+3205+3304+7106+2201+3103+6902+4106+3206+3104+1201+1202+3307+3308+2102+3213+7115+9215+3106+4907+5107+2103+OTH+Z.2.SA2..A/all?detail=Full&amp;dimensionAtObservation=AllDimensions&#39;</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[26]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#create request object</span>
+<span class="nb">abs</span> <span class="o">=</span> <span class="n">Request</span><span class="p">(</span><span class="s1">&#39;ABS&#39;</span><span class="p">)</span>
+<span class="c1">#create response object</span>
+<span class="n">response</span> <span class="o">=</span> <span class="nb">abs</span><span class="o">.</span><span class="n">data</span><span class="p">(</span><span class="n">allvic_url</span><span class="p">)</span>
+<span class="c1">#create dataset object</span>
+<span class="n">dataset</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">data</span>
+<span class="c1">##create top level series</span>
+<span class="n">data</span><span class="o">=</span><span class="n">response</span><span class="o">.</span><span class="n">write</span><span class="p">()</span>
+<span class="n">data</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[26]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>MEASURE  ANCP  STATE  REGIONTYPE  REGION     FREQUENCY  TIME_PERIOD
+TOT      TOT   2      SA2         201011001  A          2001            7543.0
+                                                        2006           10219.0
+                                                        2011           10969.0
+                                  205051101  A          2001           15263.0
+                                                        2006           16144.0
+dtype: float64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The data above is arranged in a single multi index column (with region being the postcode code and ANCP being the ancestry country code), so we need to pull the indexes into columns and then we can access the columns we need more easily:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[27]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#using reset_index removes all the levels of a multi-index column by default</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">df_ancestry</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>(265608, 8)
+</pre>
+</div>
+</div>
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[27]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>MEASURE</th>
+      <th>ANCP</th>
+      <th>STATE</th>
+      <th>REGIONTYPE</th>
+      <th>REGION</th>
+      <th>FREQUENCY</th>
+      <th>TIME_PERIOD</th>
+      <th>Value</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>TOT</td>
+      <td>TOT</td>
+      <td>2</td>
+      <td>SA2</td>
+      <td>201011001</td>
+      <td>A</td>
+      <td>2001</td>
+      <td>7543.0</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>TOT</td>
+      <td>TOT</td>
+      <td>2</td>
+      <td>SA2</td>
+      <td>201011001</td>
+      <td>A</td>
+      <td>2006</td>
+      <td>10219.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>TOT</td>
+      <td>TOT</td>
+      <td>2</td>
+      <td>SA2</td>
+      <td>201011001</td>
+      <td>A</td>
+      <td>2011</td>
+      <td>10969.0</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>TOT</td>
+      <td>TOT</td>
+      <td>2</td>
+      <td>SA2</td>
+      <td>205051101</td>
+      <td>A</td>
+      <td>2001</td>
+      <td>15263.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>TOT</td>
+      <td>TOT</td>
+      <td>2</td>
+      <td>SA2</td>
+      <td>205051101</td>
+      <td>A</td>
+      <td>2006</td>
+      <td>16144.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[28]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Take only 2011 data</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="p">[(</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;TIME_PERIOD&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;2011&#39;</span><span class="p">)]</span>
+
+<span class="c1">#The data includes six different measures of ancestry (father only, mother only, both).</span>
+<span class="c1">#in this case the only measure i&#39;m interested in the totals for each ancestry</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="p">[(</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;MEASURE&#39;</span><span class="p">]</span><span class="o">==</span><span class="s1">&#39;TOT&#39;</span><span class="p">)</span><span class="o">&amp;</span><span class="p">(</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;ANCP&#39;</span><span class="p">]</span><span class="o">!=</span><span class="s1">&#39;TOT&#39;</span><span class="p">)]</span>
+
+<span class="c1">#pivot the Ancestry to columns in preparation for k-means analysis</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="o">.</span><span class="n">pivot</span><span class="p">(</span><span class="n">index</span><span class="o">=</span><span class="s1">&#39;REGION&#39;</span><span class="p">,</span><span class="n">columns</span><span class="o">=</span><span class="s1">&#39;ANCP&#39;</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="s1">&#39;Value&#39;</span><span class="p">)</span>
+
+<span class="n">df_ancestry</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[28]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>ANCP</th>
+      <th>1101</th>
+      <th>1102</th>
+      <th>1201</th>
+      <th>1202</th>
+      <th>2101</th>
+      <th>2102</th>
+      <th>2103</th>
+      <th>2201</th>
+      <th>2303</th>
+      <th>2305</th>
+      <th>...</th>
+      <th>5107</th>
+      <th>5201</th>
+      <th>6101</th>
+      <th>6902</th>
+      <th>7106</th>
+      <th>7115</th>
+      <th>9215</th>
+      <th>OTH</th>
+      <th>TOTP</th>
+      <th>Z</th>
+    </tr>
+    <tr>
+      <th>REGION</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>201011001</th>
+      <td>3340.0</td>
+      <td>6.0</td>
+      <td>13.0</td>
+      <td>46.0</td>
+      <td>3387.0</td>
+      <td>940.0</td>
+      <td>54.0</td>
+      <td>1167.0</td>
+      <td>253.0</td>
+      <td>17.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>30.0</td>
+      <td>109.0</td>
+      <td>3.0</td>
+      <td>97.0</td>
+      <td>4.0</td>
+      <td>33.0</td>
+      <td>319.0</td>
+      <td>8195.0</td>
+      <td>373.0</td>
+    </tr>
+    <tr>
+      <th>201011002</th>
+      <td>4643.0</td>
+      <td>11.0</td>
+      <td>20.0</td>
+      <td>38.0</td>
+      <td>4979.0</td>
+      <td>1609.0</td>
+      <td>86.0</td>
+      <td>2201.0</td>
+      <td>293.0</td>
+      <td>43.0</td>
+      <td>...</td>
+      <td>4.0</td>
+      <td>36.0</td>
+      <td>201.0</td>
+      <td>9.0</td>
+      <td>159.0</td>
+      <td>5.0</td>
+      <td>35.0</td>
+      <td>583.0</td>
+      <td>12398.0</td>
+      <td>848.0</td>
+    </tr>
+    <tr>
+      <th>201011003</th>
+      <td>8635.0</td>
+      <td>32.0</td>
+      <td>22.0</td>
+      <td>70.0</td>
+      <td>8847.0</td>
+      <td>2535.0</td>
+      <td>137.0</td>
+      <td>3537.0</td>
+      <td>571.0</td>
+      <td>83.0</td>
+      <td>...</td>
+      <td>12.0</td>
+      <td>53.0</td>
+      <td>216.0</td>
+      <td>7.0</td>
+      <td>102.0</td>
+      <td>9.0</td>
+      <td>39.0</td>
+      <td>757.0</td>
+      <td>21516.0</td>
+      <td>1276.0</td>
+    </tr>
+    <tr>
+      <th>201011004</th>
+      <td>9146.0</td>
+      <td>48.0</td>
+      <td>36.0</td>
+      <td>107.0</td>
+      <td>9169.0</td>
+      <td>2531.0</td>
+      <td>147.0</td>
+      <td>2969.0</td>
+      <td>683.0</td>
+      <td>98.0</td>
+      <td>...</td>
+      <td>22.0</td>
+      <td>74.0</td>
+      <td>308.0</td>
+      <td>0.0</td>
+      <td>156.0</td>
+      <td>0.0</td>
+      <td>35.0</td>
+      <td>912.0</td>
+      <td>22579.0</td>
+      <td>1713.0</td>
+    </tr>
+    <tr>
+      <th>201011005</th>
+      <td>2554.0</td>
+      <td>6.0</td>
+      <td>8.0</td>
+      <td>39.0</td>
+      <td>2939.0</td>
+      <td>861.0</td>
+      <td>36.0</td>
+      <td>1103.0</td>
+      <td>236.0</td>
+      <td>41.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>19.0</td>
+      <td>52.0</td>
+      <td>4.0</td>
+      <td>40.0</td>
+      <td>9.0</td>
+      <td>27.0</td>
+      <td>240.0</td>
+      <td>6583.0</td>
+      <td>279.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 33 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[29]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># set number of clusters</span>
+<span class="n">k</span> <span class="o">=</span> <span class="mi">10</span>
+
+<span class="c1"># run k-means clustering</span>
+<span class="n">kmeans</span> <span class="o">=</span> <span class="n">KMeans</span><span class="p">(</span><span class="n">n_clusters</span><span class="o">=</span><span class="n">k</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">df_ancestry</span><span class="p">)</span>
+
+<span class="c1"># check cluster labels generated for each row in the dataframe</span>
+<span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">100</span><span class="p">]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[29]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>array([5, 2, 0, 0, 1, 1, 8, 2, 1, 1, 5, 1, 8, 8, 8, 1, 1, 2, 5, 2, 5, 4,
+       8, 1, 5, 1, 5, 5, 8, 5, 1, 8, 1, 8, 1, 1, 2, 0, 2, 4, 4, 4, 2, 5,
+       2, 5, 2, 5, 1, 4, 1, 8, 2, 1, 1, 2, 5, 8, 1, 8, 8, 8, 5, 8, 8, 4,
+       5, 8, 2, 8, 8, 1, 2, 0, 8, 2, 1, 1, 4, 8, 2, 1, 8, 5, 1, 1, 5, 8,
+       5, 5, 5, 8, 0, 5, 4, 2, 0, 8, 8, 8], dtype=int32)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[30]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">,</span><span class="n">kmeans</span><span class="o">.</span><span class="n">labels_</span><span class="p">)</span>
+<span class="n">df_ancestry</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[30]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>ANCP</th>
+      <th>Ancestry Cluster</th>
+      <th>1101</th>
+      <th>1102</th>
+      <th>1201</th>
+      <th>1202</th>
+      <th>2101</th>
+      <th>2102</th>
+      <th>2103</th>
+      <th>2201</th>
+      <th>2303</th>
+      <th>...</th>
+      <th>5107</th>
+      <th>5201</th>
+      <th>6101</th>
+      <th>6902</th>
+      <th>7106</th>
+      <th>7115</th>
+      <th>9215</th>
+      <th>OTH</th>
+      <th>TOTP</th>
+      <th>Z</th>
+    </tr>
+    <tr>
+      <th>REGION</th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>201011001</th>
+      <td>5</td>
+      <td>3340.0</td>
+      <td>6.0</td>
+      <td>13.0</td>
+      <td>46.0</td>
+      <td>3387.0</td>
+      <td>940.0</td>
+      <td>54.0</td>
+      <td>1167.0</td>
+      <td>253.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>30.0</td>
+      <td>109.0</td>
+      <td>3.0</td>
+      <td>97.0</td>
+      <td>4.0</td>
+      <td>33.0</td>
+      <td>319.0</td>
+      <td>8195.0</td>
+      <td>373.0</td>
+    </tr>
+    <tr>
+      <th>201011002</th>
+      <td>2</td>
+      <td>4643.0</td>
+      <td>11.0</td>
+      <td>20.0</td>
+      <td>38.0</td>
+      <td>4979.0</td>
+      <td>1609.0</td>
+      <td>86.0</td>
+      <td>2201.0</td>
+      <td>293.0</td>
+      <td>...</td>
+      <td>4.0</td>
+      <td>36.0</td>
+      <td>201.0</td>
+      <td>9.0</td>
+      <td>159.0</td>
+      <td>5.0</td>
+      <td>35.0</td>
+      <td>583.0</td>
+      <td>12398.0</td>
+      <td>848.0</td>
+    </tr>
+    <tr>
+      <th>201011003</th>
+      <td>0</td>
+      <td>8635.0</td>
+      <td>32.0</td>
+      <td>22.0</td>
+      <td>70.0</td>
+      <td>8847.0</td>
+      <td>2535.0</td>
+      <td>137.0</td>
+      <td>3537.0</td>
+      <td>571.0</td>
+      <td>...</td>
+      <td>12.0</td>
+      <td>53.0</td>
+      <td>216.0</td>
+      <td>7.0</td>
+      <td>102.0</td>
+      <td>9.0</td>
+      <td>39.0</td>
+      <td>757.0</td>
+      <td>21516.0</td>
+      <td>1276.0</td>
+    </tr>
+    <tr>
+      <th>201011004</th>
+      <td>0</td>
+      <td>9146.0</td>
+      <td>48.0</td>
+      <td>36.0</td>
+      <td>107.0</td>
+      <td>9169.0</td>
+      <td>2531.0</td>
+      <td>147.0</td>
+      <td>2969.0</td>
+      <td>683.0</td>
+      <td>...</td>
+      <td>22.0</td>
+      <td>74.0</td>
+      <td>308.0</td>
+      <td>0.0</td>
+      <td>156.0</td>
+      <td>0.0</td>
+      <td>35.0</td>
+      <td>912.0</td>
+      <td>22579.0</td>
+      <td>1713.0</td>
+    </tr>
+    <tr>
+      <th>201011005</th>
+      <td>1</td>
+      <td>2554.0</td>
+      <td>6.0</td>
+      <td>8.0</td>
+      <td>39.0</td>
+      <td>2939.0</td>
+      <td>861.0</td>
+      <td>36.0</td>
+      <td>1103.0</td>
+      <td>236.0</td>
+      <td>...</td>
+      <td>0.0</td>
+      <td>19.0</td>
+      <td>52.0</td>
+      <td>4.0</td>
+      <td>40.0</td>
+      <td>9.0</td>
+      <td>27.0</td>
+      <td>240.0</td>
+      <td>6583.0</td>
+      <td>279.0</td>
+    </tr>
+  </tbody>
+</table>
+<p>5 rows × 34 columns</p>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The table above refers to REGION  and ANCP (ancestry) by codes. We need to get the xml from the ABS which describes what each code value is and and use it to merge the name of the suburb back into the data.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[31]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#an xml parser is required to get the codes from the Australian Bureau of Statistics xml file</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="k">as</span> <span class="nn">ET</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[32]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#the xml file of codes from the ABS</span>
+<span class="n">user_agent_url</span> <span class="o">=</span> <span class="s1">&#39;http://stat.data.abs.gov.au/restsdmx/sdmx.ashx/GetDataStructure/ABS_CENSUS2011_T09&#39;</span>
+<span class="n">xml_data</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">user_agent_url</span><span class="p">)</span><span class="o">.</span><span class="n">content</span>
+
+<span class="c1">#create the xml tree from the file</span>
+<span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">xml_data</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[33]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#Create a dataframe which will include all the codes</span>
+<span class="n">df_codes</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">,</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+
+<span class="c1">#parse the structure xml to get the codes:</span>
+<span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">tree</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">lower</span> <span class="ow">in</span> <span class="n">child</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">codelist</span> <span class="ow">in</span> <span class="n">lower</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">description</span> <span class="ow">in</span> <span class="n">codelist</span><span class="p">:</span>
+                <span class="k">if</span><span class="p">(</span><span class="n">description</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;{http://www.w3.org/XML/1998/namespace}lang&#39;</span><span class="p">)</span><span class="o">==</span><span class="s1">&#39;en&#39;</span><span class="p">):</span>
+                    <span class="n">code</span> <span class="o">=</span> <span class="n">codelist</span><span class="o">.</span><span class="n">attrib</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;value&#39;</span><span class="p">)</span>
+                    <span class="n">value</span> <span class="o">=</span> <span class="n">description</span><span class="o">.</span><span class="n">text</span>
+                    <span class="n">temp_df</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">([[</span><span class="n">code</span><span class="p">,</span><span class="n">value</span><span class="p">]],</span><span class="n">columns</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;code&#39;</span><span class="p">,</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+                    <span class="n">df_codes</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">df_codes</span><span class="p">,</span><span class="n">temp_df</span><span class="p">])</span>
+
+<span class="c1">#set the code as the index of the table</span>
+<span class="n">df_codes</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;code&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1">#strip whitespaces from the values column</span>
+<span class="n">df_codes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_codes</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+<span class="n">df_codes</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[33]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>value</th>
+    </tr>
+    <tr>
+      <th>code</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>TOT</th>
+      <td>Total responses(c)</td>
+    </tr>
+    <tr>
+      <th>1</th>
+      <td>Both parents born overseas</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>Father only born overseas</td>
+    </tr>
+    <tr>
+      <th>3</th>
+      <td>Mother only born overseas</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>Both parents born in Australia</td>
+    </tr>
+    <tr>
+      <th>Z</th>
+      <td>Birthplace not stated(b)</td>
+    </tr>
+    <tr>
+      <th>TOT</th>
+      <td>Total responses(c)</td>
+    </tr>
+    <tr>
+      <th>TOTP</th>
+      <td>Total persons(c)</td>
+    </tr>
+    <tr>
+      <th>1101</th>
+      <td>Australian</td>
+    </tr>
+    <tr>
+      <th>1102</th>
+      <td>Australian Aboriginal</td>
+    </tr>
+    <tr>
+      <th>6101</th>
+      <td>Chinese</td>
+    </tr>
+    <tr>
+      <th>3204</th>
+      <td>Croatian</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[34]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#merge the codes back into the Ancestrt dataframe</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">df_codes</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We now have a dataframe of Suburbs with Ancestry clusters. We'll clean this dataframe up as well as the original dataframe containing the Venue Cluster so that we can merge them in the subsequent step on suburb name.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[35]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># select only the required columns, fix the names and make suburb lowercase for searching</span>
+<span class="n">df_ancestry</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="p">[[</span><span class="s1">&#39;value&#39;</span><span class="p">,</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">]]</span>
+<span class="n">df_ancestry</span><span class="o">.</span><span class="n">rename</span><span class="p">(</span><span class="n">columns</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;value&quot;</span><span class="p">:</span><span class="s2">&quot;suburb&quot;</span><span class="p">},</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1">#strip out whitespace, change to lowercase</span>
+<span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="n">df_melbourne_merged</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">df_melbourne_merged</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+<span class="n">df_ancestry</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">df_melbourne_merged</span><span class="o">.</span><span class="n">sort_values</span><span class="p">(</span><span class="n">by</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">],</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stderr output_text">
+<pre>/opt/conda/envs/Python36/lib/python3.6/site-packages/ipykernel/__main__.py:7: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+/opt/conda/envs/Python36/lib/python3.6/site-packages/ipykernel/__main__.py:9: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame
+
+See the caveats in the documentation: http://pandas.pydata.org/pandas-docs/stable/indexing.html#indexing-view-versus-copy
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[36]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#merge on suburb</span>
+<span class="n">df_complete</span> <span class="o">=</span> <span class="n">df_melbourne_merged</span><span class="o">.</span><span class="n">merge</span><span class="p">(</span><span class="n">df_ancestry</span><span class="p">,</span> <span class="n">how</span><span class="o">=</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="s1">&#39;suburb&#39;</span><span class="p">)</span>
+
+<span class="c1">#and pick only relevant columns</span>
+<span class="n">df_complete</span> <span class="o">=</span> <span class="n">df_complete</span><span class="p">[[</span><span class="s1">&#39;postcode&#39;</span><span class="p">,</span><span class="s1">&#39;suburb&#39;</span><span class="p">,</span><span class="s1">&#39;state&#39;</span><span class="p">,</span><span class="s1">&#39;Venues Cluster&#39;</span><span class="p">,</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">]]</span>
+
+<span class="c1">#and see how many suburbs didn&#39;t find a matching Ancestry Cluster</span>
+<span class="n">df_complete</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])][</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[36]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(296,)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>The above shows that 296 of our suburbs did not have a entry in the Ancestry dataframe when we merge directly on Suburb name. We'll need to do some looser matching which gets this number down to 93. Note that the remaining 93 are not really suburbs - they are standalone postcodes used by Australia Post</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[37]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#where suburb couldn&#39;t be matched directly, try to find the suburb name as a substing in df_ancestry:</span>
+<span class="k">for</span> <span class="n">suburb</span> <span class="ow">in</span> <span class="n">df_complete</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])][</span><span class="s1">&#39;suburb&#39;</span><span class="p">]:</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">suburb</span><span class="p">)][</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">df_complete</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">suburb</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">,</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">suburb</span><span class="p">)][</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="c1"># where there is still no macth, try to split the suburb and find the sub string. This will allow, for example, &#39;Altona North&#39; to get the cluster for &#39;Altona&#39;</span>
+<span class="k">for</span> <span class="n">suburb</span> <span class="ow">in</span> <span class="n">df_complete</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])][</span><span class="s1">&#39;suburb&#39;</span><span class="p">]:</span>
+    <span class="n">suburb2</span> <span class="o">=</span> <span class="n">suburb</span><span class="o">.</span><span class="n">split</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="k">if</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">suburb2</span><span class="p">)][</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">):</span>
+        <span class="n">df_complete</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">suburb</span><span class="p">]</span><span class="o">.</span><span class="n">index</span><span class="p">,</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">df_ancestry</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_ancestry</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">str</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">suburb2</span><span class="p">)][</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="c1">#and see how many suburbs didn&#39;t find a matching Ancestry Cluster</span>
+<span class="n">df_complete</span><span class="p">[</span><span class="n">pd</span><span class="o">.</span><span class="n">isnull</span><span class="p">(</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;Ancestry Cluster&#39;</span><span class="p">])][</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[37]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>(93,)</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[38]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#all the suburbs without an Ancestry Cluster are not actually recognisable suburbs, so we can drop these:</span>
+<span class="n">df_complete</span><span class="o">.</span><span class="n">dropna</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[39]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_complete</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[39]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>Venues Cluster</th>
+      <th>Ancestry Cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>3040</td>
+      <td>aberfeldie</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3042</td>
+      <td>airport west</td>
+      <td>VIC</td>
+      <td>4.0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3206</td>
+      <td>albert park</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>3020</td>
+      <td>albion</td>
+      <td>VIC</td>
+      <td>4.0</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>3078</td>
+      <td>alphington</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Assign-age-and-income-brackets">Assign age and income brackets<a class="anchor-link" href="#Assign-age-and-income-brackets">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Most real estate search tools offer suburb profiles which include information prospective buyers/renters would typically be interested in, such as recent sold prices as well as demographic information. This project will utilize limited demographic information scraped from RealestateVIEW.com.au; Median Age and Median Weekly Income.</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[40]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#define a function which takes a suburb name and scrapes the web for median age and household income statistics</span>
+<span class="k">def</span> <span class="nf">get_age_income</span><span class="p">(</span><span class="n">state</span><span class="p">,</span><span class="n">suburb</span><span class="p">):</span>
+    
+    <span class="c1">#Format the url</span>
+    <span class="n">url</span><span class="o">=</span><span class="s1">&#39;https://propertydata.realestateview.com.au/propertydata/suburb-profile/&#39;</span><span class="o">+</span><span class="n">state</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+    <span class="n">suburb</span> <span class="o">=</span> <span class="n">suburb</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+    <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">suburb</span><span class="p">:</span>
+        <span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="o">+</span><span class="n">i</span><span class="o">+</span><span class="s2">&quot;+&quot;</span>
+    
+    <span class="n">age</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">income</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="c1">#get the page text for the suburb</span>
+    <span class="n">page</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span><span class="o">.</span><span class="n">text</span>
+    <span class="n">soup</span> <span class="o">=</span> <span class="n">BeautifulSoup</span><span class="p">(</span><span class="n">page</span><span class="p">,</span> <span class="s1">&#39;lxml&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#find all the important elements</span>
+    <span class="n">sp</span> <span class="o">=</span> <span class="n">soup</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s1">&#39;b&#39;</span><span class="p">)</span>
+    
+    <span class="c1">#get the median age and income for the suburb</span>
+    <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">sp</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="o">==</span><span class="s1">&#39;Median Age&#39;</span><span class="p">:</span>
+            <span class="n">age</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">next_sibling</span><span class="o">.</span><span class="n">next_sibling</span><span class="o">.</span><span class="n">translate</span><span class="p">({</span><span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="p">})</span>
+        <span class="k">if</span> <span class="n">element</span><span class="o">.</span><span class="n">text</span><span class="o">==</span><span class="s1">&#39;Weekly Household Income&#39;</span><span class="p">:</span>
+            <span class="n">income</span> <span class="o">=</span> <span class="n">element</span><span class="o">.</span><span class="n">next_sibling</span><span class="o">.</span><span class="n">next_sibling</span><span class="o">.</span><span class="n">translate</span><span class="p">({</span><span class="nb">ord</span><span class="p">(</span><span class="n">i</span><span class="p">):</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="s1">&#39;</span><span class="se">\n\t</span><span class="s1">&#39;</span><span class="p">})</span>
+        
+    <span class="k">return</span> <span class="n">age</span><span class="p">,</span> <span class="n">income</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[41]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#insert columns for median age and weekly income</span>
+<span class="n">df_complete</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="s1">&#39;Age&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">df_complete</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="s1">&#39;Income&#39;</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[42]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#fetch Median Age and Weekly Income from https://propertydata.realestateview.com.au/</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Getting Median Age and Weekly Income from https://propertydata.realestateview.com.au/, please wait...&#39;</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">df_complete</span><span class="o">.</span><span class="n">itertuples</span><span class="p">():</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">get_age_income</span><span class="p">(</span><span class="s1">&#39;victoria&#39;</span><span class="p">,</span><span class="n">row</span><span class="o">.</span><span class="n">suburb</span><span class="p">)</span>
+    <span class="n">df_complete</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">row</span><span class="o">.</span><span class="n">suburb</span><span class="p">,</span><span class="s1">&#39;Age&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">df_complete</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">==</span><span class="n">row</span><span class="o">.</span><span class="n">suburb</span><span class="p">,</span><span class="s1">&#39;Income&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;...complete&#39;</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Getting Median Age and Weekly Income from https://propertydata.realestateview.com.au/, please wait...
+...complete
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[43]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">df_complete</span><span class="o">.</span><span class="n">head</span><span class="p">()</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[43]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>Venues Cluster</th>
+      <th>Income</th>
+      <th>Age</th>
+      <th>Ancestry Cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>1</th>
+      <td>3040</td>
+      <td>aberfeldie</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>2200.00</td>
+      <td>40</td>
+      <td>0.0</td>
+    </tr>
+    <tr>
+      <th>2</th>
+      <td>3042</td>
+      <td>airport west</td>
+      <td>VIC</td>
+      <td>4.0</td>
+      <td>1375.00</td>
+      <td>40</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>4</th>
+      <td>3206</td>
+      <td>albert park</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>2263.00</td>
+      <td>43</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>5</th>
+      <td>3020</td>
+      <td>albion</td>
+      <td>VIC</td>
+      <td>4.0</td>
+      <td>1010.00</td>
+      <td>33</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>6</th>
+      <td>3078</td>
+      <td>alphington</td>
+      <td>VIC</td>
+      <td>3.0</td>
+      <td>2123.00</td>
+      <td>38</td>
+      <td>1.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We now have a complete list of suburbs with clusters assigned based on the venues in the area and the ancestry of the people, as well as the relative age and income of the inhabitants</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h1 id="Recommend-a-Suburb">Recommend a Suburb<a class="anchor-link" href="#Recommend-a-Suburb">&#182;</a></h1>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[44]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1">#postcode and state are not required for the recommendation calculation</span>
+<span class="n">similar_sort</span> <span class="o">=</span> <span class="n">df_complete</span><span class="o">.</span><span class="n">drop</span><span class="p">([</span><span class="s1">&#39;postcode&#39;</span><span class="p">,</span><span class="s1">&#39;state&#39;</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1">#Update the index and clean up the column types</span>
+<span class="n">similar_sort</span><span class="o">.</span><span class="n">set_index</span><span class="p">(</span><span class="s1">&#39;suburb&#39;</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">similar_sort</span><span class="p">[</span><span class="s1">&#39;Age&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">similar_sort</span><span class="o">.</span><span class="n">Age</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+<span class="n">similar_sort</span><span class="p">[</span><span class="s1">&#39;Income&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">similar_sort</span><span class="o">.</span><span class="n">Income</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span>
+
+<span class="c1">#normalize the data into a new dataframe</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="k">import</span> <span class="n">MinMaxScaler</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">similar_sort</span><span class="o">.</span><span class="n">values</span> <span class="c1">#returns a numpy array</span>
+<span class="n">min_max_scaler</span> <span class="o">=</span> <span class="n">MinMaxScaler</span><span class="p">()</span>
+<span class="n">feature_mtx</span> <span class="o">=</span> <span class="n">min_max_scaler</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">feature_mtx</span> <span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>
+
+<span class="n">df_normal</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">(</span><span class="n">feature_mtx</span><span class="p">,</span> <span class="n">index</span><span class="o">=</span><span class="n">similar_sort</span><span class="o">.</span><span class="n">index</span><span class="p">,</span> <span class="n">columns</span><span class="o">=</span><span class="n">similar_sort</span><span class="o">.</span><span class="n">columns</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[45]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># The following function takes in a suburb and returns the top 10 similar suburbs</span>
+<span class="k">def</span> <span class="nf">subrec</span><span class="p">(</span><span class="n">suburb</span><span class="p">):</span>
+    
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1">#choose a suburb for comparison</span>
+        <span class="n">new_suburb</span> <span class="o">=</span> <span class="n">suburb</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">new_suburb_df</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">df_normal</span><span class="o">.</span><span class="n">loc</span><span class="p">[</span><span class="n">new_suburb</span><span class="p">])</span>
+
+        <span class="c1">#get the absolute difference between the new suburb and all other suburbs</span>
+        <span class="n">temp_df</span> <span class="o">=</span> <span class="n">df_normal</span><span class="o">-</span><span class="n">new_suburb_df</span>
+        <span class="n">temp_df</span> <span class="o">=</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span>
+        <span class="n">recommendations</span> <span class="o">=</span> <span class="n">temp_df</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">sort_values</span><span class="p">()</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">recommendations</span>
+
+    <span class="k">except</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Error: Suburb not found&quot;</span><span class="p">)</span>
+    
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Using the function for a given suburb gives the similarity scores for the top 10 similar suburbs</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[46]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">suburb</span> <span class="o">=</span> <span class="s1">&#39;Prahran&#39;</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">subrec</span><span class="p">(</span><span class="n">suburb</span><span class="p">)</span>
+<span class="n">results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[46]:</div>
+
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>suburb
+prahran           0.000000
+fitzroy north     0.194010
+south yarra       0.254777
+hawthorn east     0.286826
+yallambie         0.296024
+clifton hill      0.320766
+coburg            0.337025
+malvern east      0.339021
+princes hill      0.393546
+brunswick east    0.397217
+dtype: float64</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>We can see more details for the top 10 including their feature values:</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[47]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">detailed_results</span> <span class="o">=</span> <span class="n">df_complete</span><span class="p">[</span><span class="n">df_complete</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+<span class="n">detailed_results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[47]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>Venues Cluster</th>
+      <th>Income</th>
+      <th>Age</th>
+      <th>Ancestry Cluster</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>66</th>
+      <td>3057</td>
+      <td>brunswick east</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1726.00</td>
+      <td>32</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>108</th>
+      <td>3068</td>
+      <td>clifton hill</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>2272.00</td>
+      <td>36</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <th>110</th>
+      <td>3058</td>
+      <td>coburg</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1638.00</td>
+      <td>35</td>
+      <td>6.0</td>
+    </tr>
+    <tr>
+      <th>159</th>
+      <td>3068</td>
+      <td>fitzroy north</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1920.00</td>
+      <td>36</td>
+      <td>5.0</td>
+    </tr>
+    <tr>
+      <th>185</th>
+      <td>3123</td>
+      <td>hawthorn east</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1976.00</td>
+      <td>34</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>247</th>
+      <td>3145</td>
+      <td>malvern east</td>
+      <td>VIC</td>
+      <td>1.0</td>
+      <td>1937.00</td>
+      <td>36</td>
+      <td>4.0</td>
+    </tr>
+    <tr>
+      <th>311</th>
+      <td>3181</td>
+      <td>prahran</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1850.00</td>
+      <td>33</td>
+      <td>4.0</td>
+    </tr>
+    <tr>
+      <th>317</th>
+      <td>3054</td>
+      <td>princes hill</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1857.00</td>
+      <td>36</td>
+      <td>1.0</td>
+    </tr>
+    <tr>
+      <th>350</th>
+      <td>3141</td>
+      <td>south yarra</td>
+      <td>VIC</td>
+      <td>0.0</td>
+      <td>1813.00</td>
+      <td>32</td>
+      <td>2.0</td>
+    </tr>
+    <tr>
+      <th>414</th>
+      <td>3085</td>
+      <td>yallambie</td>
+      <td>VIC</td>
+      <td>1.0</td>
+      <td>1871.00</td>
+      <td>35</td>
+      <td>4.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered"><div class="prompt input_prompt">
+</div><div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h2 id="Map-the-results">Map the results<a class="anchor-link" href="#Map-the-results">&#182;</a></h2>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="o">!</span>pip install folium
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>Collecting folium
+  Downloading https://files.pythonhosted.org/packages/4f/86/1ab30184cb60bc2b95deffe2bd86b8ddbab65a4fac9f7313c278c6e8d049/folium-0.9.1-py2.py3-none-any.whl (91kB)
+     |████████████████████████████████| 92kB 14.3MB/s eta 0:00:01
+Requirement already satisfied: requests in /opt/conda/envs/Python36/lib/python3.6/site-packages (from folium) (2.21.0)
+Requirement already satisfied: jinja2&gt;=2.9 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from folium) (2.10)
+Requirement already satisfied: numpy in /opt/conda/envs/Python36/lib/python3.6/site-packages (from folium) (1.15.4)
+Collecting branca&gt;=0.3.0 (from folium)
+  Downloading https://files.pythonhosted.org/packages/63/36/1c93318e9653f4e414a2e0c3b98fc898b4970e939afeedeee6075dd3b703/branca-0.3.1-py3-none-any.whl
+Requirement already satisfied: idna&lt;2.9,&gt;=2.5 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;folium) (2.8)
+Requirement already satisfied: certifi&gt;=2017.4.17 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;folium) (2019.6.16)
+Requirement already satisfied: chardet&lt;3.1.0,&gt;=3.0.2 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;folium) (3.0.4)
+Requirement already satisfied: urllib3&lt;1.25,&gt;=1.21.1 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from requests-&gt;folium) (1.24.1)
+Requirement already satisfied: MarkupSafe&gt;=0.23 in /opt/conda/envs/Python36/lib/python3.6/site-packages (from jinja2&gt;=2.9-&gt;folium) (1.1.0)
+Requirement already satisfied: six in /opt/conda/envs/Python36/lib/python3.6/site-packages (from branca&gt;=0.3.0-&gt;folium) (1.12.0)
+Installing collected packages: branca, folium
+Successfully installed branca-0.3.1 folium-0.9.1
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="kn">import</span> <span class="nn">folium</span> <span class="c1"># map rendering library</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">latitude</span><span class="o">=-</span><span class="mf">37.814563</span>
+<span class="n">longitude</span><span class="o">=</span><span class="mf">144.970267</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">latitude</span><span class="p">,</span><span class="n">longitude</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt"></div>
+
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>-37.814563 144.970267
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[54]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">detailed_results</span> <span class="o">=</span> <span class="n">df_melbourne_merged</span><span class="p">[</span><span class="n">df_melbourne_merged</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">isin</span><span class="p">(</span><span class="n">results</span><span class="o">.</span><span class="n">index</span><span class="p">)]</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[55]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">detailed_results</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[55]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>postcode</th>
+      <th>suburb</th>
+      <th>state</th>
+      <th>lat</th>
+      <th>lon</th>
+      <th>Venues Cluster</th>
+      <th>#1</th>
+      <th>#2</th>
+      <th>#3</th>
+      <th>#4</th>
+      <th>#5</th>
+      <th>#6</th>
+      <th>#7</th>
+      <th>#8</th>
+      <th>#9</th>
+      <th>#10</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>5016</th>
+      <td>3057</td>
+      <td>brunswick east</td>
+      <td>VIC</td>
+      <td>-37.764910</td>
+      <td>144.979567</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bar</td>
+      <td>Bakery</td>
+      <td>Pizza Place</td>
+      <td>Mexican Restaurant</td>
+      <td>Beer Garden</td>
+      <td>Vietnamese Restaurant</td>
+      <td>Italian Restaurant</td>
+      <td>Grocery Store</td>
+      <td>Gastropub</td>
+    </tr>
+    <tr>
+      <th>5036</th>
+      <td>3068</td>
+      <td>clifton hill</td>
+      <td>VIC</td>
+      <td>-37.788118</td>
+      <td>144.992067</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bakery</td>
+      <td>Pub</td>
+      <td>Vegetarian / Vegan Restaurant</td>
+      <td>Italian Restaurant</td>
+      <td>Bar</td>
+      <td>Coffee Shop</td>
+      <td>Gastropub</td>
+      <td>Cocktail Bar</td>
+      <td>Ice Cream Shop</td>
+    </tr>
+    <tr>
+      <th>5018</th>
+      <td>3058</td>
+      <td>coburg</td>
+      <td>VIC</td>
+      <td>-37.743188</td>
+      <td>144.966279</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bar</td>
+      <td>Bakery</td>
+      <td>Middle Eastern Restaurant</td>
+      <td>Grocery Store</td>
+      <td>Vietnamese Restaurant</td>
+      <td>Beer Garden</td>
+      <td>Thai Restaurant</td>
+      <td>Pizza Place</td>
+      <td>Mexican Restaurant</td>
+    </tr>
+    <tr>
+      <th>5037</th>
+      <td>3068</td>
+      <td>fitzroy north</td>
+      <td>VIC</td>
+      <td>-37.783400</td>
+      <td>144.984688</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bar</td>
+      <td>Pub</td>
+      <td>Bakery</td>
+      <td>Italian Restaurant</td>
+      <td>Vegetarian / Vegan Restaurant</td>
+      <td>Coffee Shop</td>
+      <td>Ice Cream Shop</td>
+      <td>Gastropub</td>
+      <td>Wine Shop</td>
+    </tr>
+    <tr>
+      <th>5120</th>
+      <td>3123</td>
+      <td>hawthorn east</td>
+      <td>VIC</td>
+      <td>-37.782254</td>
+      <td>145.001811</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bakery</td>
+      <td>Vegetarian / Vegan Restaurant</td>
+      <td>Pub</td>
+      <td>Pizza Place</td>
+      <td>Indian Restaurant</td>
+      <td>Gastropub</td>
+      <td>Italian Restaurant</td>
+      <td>Bar</td>
+      <td>Coffee Shop</td>
+    </tr>
+    <tr>
+      <th>5184</th>
+      <td>3145</td>
+      <td>malvern east</td>
+      <td>VIC</td>
+      <td>-37.878370</td>
+      <td>145.067892</td>
+      <td>1.0</td>
+      <td>Café</td>
+      <td>Korean Restaurant</td>
+      <td>Park</td>
+      <td>Supermarket</td>
+      <td>Electronics Store</td>
+      <td>Breakfast Spot</td>
+      <td>Chinese Restaurant</td>
+      <td>Thai Restaurant</td>
+      <td>Malay Restaurant</td>
+      <td>Fast Food Restaurant</td>
+    </tr>
+    <tr>
+      <th>5253</th>
+      <td>3181</td>
+      <td>prahran</td>
+      <td>VIC</td>
+      <td>-37.849577</td>
+      <td>144.993714</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Italian Restaurant</td>
+      <td>Japanese Restaurant</td>
+      <td>Bar</td>
+      <td>Coffee Shop</td>
+      <td>Pub</td>
+      <td>Deli / Bodega</td>
+      <td>Pizza Place</td>
+      <td>Clothing Store</td>
+      <td>French Restaurant</td>
+    </tr>
+    <tr>
+      <th>5008</th>
+      <td>3054</td>
+      <td>princes hill</td>
+      <td>VIC</td>
+      <td>-37.780995</td>
+      <td>144.962792</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Bar</td>
+      <td>Zoo Exhibit</td>
+      <td>Italian Restaurant</td>
+      <td>Bakery</td>
+      <td>Pub</td>
+      <td>Vietnamese Restaurant</td>
+      <td>Dog Run</td>
+      <td>Gastropub</td>
+      <td>Grocery Store</td>
+    </tr>
+    <tr>
+      <th>5173</th>
+      <td>3141</td>
+      <td>south yarra</td>
+      <td>VIC</td>
+      <td>-37.837883</td>
+      <td>144.991123</td>
+      <td>0.0</td>
+      <td>Café</td>
+      <td>Italian Restaurant</td>
+      <td>French Restaurant</td>
+      <td>Japanese Restaurant</td>
+      <td>Bakery</td>
+      <td>Hotel</td>
+      <td>Dessert Shop</td>
+      <td>Coffee Shop</td>
+      <td>Pub</td>
+      <td>Korean Restaurant</td>
+    </tr>
+    <tr>
+      <th>5071</th>
+      <td>3085</td>
+      <td>yallambie</td>
+      <td>VIC</td>
+      <td>-37.727482</td>
+      <td>145.102309</td>
+      <td>1.0</td>
+      <td>Café</td>
+      <td>Fast Food Restaurant</td>
+      <td>Grocery Store</td>
+      <td>Supermarket</td>
+      <td>Sandwich Place</td>
+      <td>Convenience Store</td>
+      <td>Pub</td>
+      <td>Art Gallery</td>
+      <td>Shopping Mall</td>
+      <td>Burger Joint</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[70]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># create map</span>
+<span class="n">map_clusters</span> <span class="o">=</span> <span class="n">folium</span><span class="o">.</span><span class="n">Map</span><span class="p">(</span><span class="n">location</span><span class="o">=</span><span class="p">[</span><span class="n">latitude</span><span class="p">,</span> <span class="n">longitude</span><span class="p">],</span> <span class="n">zoom_start</span><span class="o">=</span><span class="mi">11</span><span class="p">)</span>
+
+<span class="n">colors_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;Red&#39;</span><span class="p">,</span><span class="s1">&#39;Blue&#39;</span><span class="p">,</span><span class="s1">&#39;Green&#39;</span><span class="p">,</span><span class="s1">&#39;Yellow&#39;</span><span class="p">,</span><span class="s1">&#39;Purple&#39;</span><span class="p">,</span><span class="s1">&#39;Pink&#39;</span><span class="p">,</span><span class="s1">&#39;Orange&#39;</span><span class="p">]</span>
+
+<span class="c1">#add markers to the map</span>
+<span class="n">markers_colors</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">,</span> <span class="n">suburb</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">detailed_results</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">],</span> <span class="n">detailed_results</span><span class="p">[</span><span class="s1">&#39;lon&#39;</span><span class="p">],</span> <span class="n">detailed_results</span><span class="p">[</span><span class="s1">&#39;suburb&#39;</span><span class="p">]):</span>
+    <span class="n">label</span> <span class="o">=</span> <span class="n">folium</span><span class="o">.</span><span class="n">Popup</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">suburb</span><span class="p">),</span> <span class="n">parse_html</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">folium</span><span class="o">.</span><span class="n">CircleMarker</span><span class="p">(</span>
+        <span class="p">[</span><span class="n">lat</span><span class="p">,</span> <span class="n">lon</span><span class="p">],</span>
+        <span class="n">radius</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+        <span class="n">popup</span><span class="o">=</span><span class="n">label</span><span class="p">,</span>
+        <span class="c1">#color=colors_list[int(cluster)],</span>
+        <span class="n">fill</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+       <span class="n">fill_opacity</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span><span class="o">.</span><span class="n">add_to</span><span class="p">(</span><span class="n">map_clusters</span><span class="p">)</span>
+
+       
+<span class="n">map_clusters</span>
+</pre></div>
+
+    </div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+
+    <div class="prompt output_prompt">Out[70]:</div>
+
+
+
+<div class="output_html rendered_html output_subarea output_execute_result">
+<div style="width:100%;"><div style="position:relative;width:100%;height:0;padding-bottom:60%;"><iframe src="data:text/html;charset=utf-8;base64,PCFET0NUWVBFIGh0bWw+CjxoZWFkPiAgICAKICAgIDxtZXRhIGh0dHAtZXF1aXY9ImNvbnRlbnQtdHlwZSIgY29udGVudD0idGV4dC9odG1sOyBjaGFyc2V0PVVURi04IiAvPgogICAgCiAgICAgICAgPHNjcmlwdD4KICAgICAgICAgICAgTF9OT19UT1VDSCA9IGZhbHNlOwogICAgICAgICAgICBMX0RJU0FCTEVfM0QgPSBmYWxzZTsKICAgICAgICA8L3NjcmlwdD4KICAgIAogICAgPHNjcmlwdCBzcmM9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9ucG0vbGVhZmxldEAxLjQuMC9kaXN0L2xlYWZsZXQuanMiPjwvc2NyaXB0PgogICAgPHNjcmlwdCBzcmM9Imh0dHBzOi8vY29kZS5qcXVlcnkuY29tL2pxdWVyeS0xLjEyLjQubWluLmpzIj48L3NjcmlwdD4KICAgIDxzY3JpcHQgc3JjPSJodHRwczovL21heGNkbi5ib290c3RyYXBjZG4uY29tL2Jvb3RzdHJhcC8zLjIuMC9qcy9ib290c3RyYXAubWluLmpzIj48L3NjcmlwdD4KICAgIDxzY3JpcHQgc3JjPSJodHRwczovL2NkbmpzLmNsb3VkZmxhcmUuY29tL2FqYXgvbGlicy9MZWFmbGV0LmF3ZXNvbWUtbWFya2Vycy8yLjAuMi9sZWFmbGV0LmF3ZXNvbWUtbWFya2Vycy5qcyI+PC9zY3JpcHQ+CiAgICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9Imh0dHBzOi8vY2RuLmpzZGVsaXZyLm5ldC9ucG0vbGVhZmxldEAxLjQuMC9kaXN0L2xlYWZsZXQuY3NzIi8+CiAgICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9Imh0dHBzOi8vbWF4Y2RuLmJvb3RzdHJhcGNkbi5jb20vYm9vdHN0cmFwLzMuMi4wL2Nzcy9ib290c3RyYXAubWluLmNzcyIvPgogICAgPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL21heGNkbi5ib290c3RyYXBjZG4uY29tL2Jvb3RzdHJhcC8zLjIuMC9jc3MvYm9vdHN0cmFwLXRoZW1lLm1pbi5jc3MiLz4KICAgIDxsaW5rIHJlbD0ic3R5bGVzaGVldCIgaHJlZj0iaHR0cHM6Ly9tYXhjZG4uYm9vdHN0cmFwY2RuLmNvbS9mb250LWF3ZXNvbWUvNC42LjMvY3NzL2ZvbnQtYXdlc29tZS5taW4uY3NzIi8+CiAgICA8bGluayByZWw9InN0eWxlc2hlZXQiIGhyZWY9Imh0dHBzOi8vY2RuanMuY2xvdWRmbGFyZS5jb20vYWpheC9saWJzL0xlYWZsZXQuYXdlc29tZS1tYXJrZXJzLzIuMC4yL2xlYWZsZXQuYXdlc29tZS1tYXJrZXJzLmNzcyIvPgogICAgPGxpbmsgcmVsPSJzdHlsZXNoZWV0IiBocmVmPSJodHRwczovL3Jhd2Nkbi5naXRoYWNrLmNvbS9weXRob24tdmlzdWFsaXphdGlvbi9mb2xpdW0vbWFzdGVyL2ZvbGl1bS90ZW1wbGF0ZXMvbGVhZmxldC5hd2Vzb21lLnJvdGF0ZS5jc3MiLz4KICAgIDxzdHlsZT5odG1sLCBib2R5IHt3aWR0aDogMTAwJTtoZWlnaHQ6IDEwMCU7bWFyZ2luOiAwO3BhZGRpbmc6IDA7fTwvc3R5bGU+CiAgICA8c3R5bGU+I21hcCB7cG9zaXRpb246YWJzb2x1dGU7dG9wOjA7Ym90dG9tOjA7cmlnaHQ6MDtsZWZ0OjA7fTwvc3R5bGU+CiAgICAKICAgICAgICAgICAgPG1ldGEgbmFtZT0idmlld3BvcnQiIGNvbnRlbnQ9IndpZHRoPWRldmljZS13aWR0aCwKICAgICAgICAgICAgICAgIGluaXRpYWwtc2NhbGU9MS4wLCBtYXhpbXVtLXNjYWxlPTEuMCwgdXNlci1zY2FsYWJsZT1ubyIgLz4KICAgICAgICAgICAgPHN0eWxlPgogICAgICAgICAgICAgICAgI21hcF82ZjkxNzMyMTRkOGU0NDJkYTM2MWE3ZmU5MzQ4MDdmZCB7CiAgICAgICAgICAgICAgICAgICAgcG9zaXRpb246IHJlbGF0aXZlOwogICAgICAgICAgICAgICAgICAgIHdpZHRoOiAxMDAuMCU7CiAgICAgICAgICAgICAgICAgICAgaGVpZ2h0OiAxMDAuMCU7CiAgICAgICAgICAgICAgICAgICAgbGVmdDogMC4wJTsKICAgICAgICAgICAgICAgICAgICB0b3A6IDAuMCU7CiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgIDwvc3R5bGU+CiAgICAgICAgCjwvaGVhZD4KPGJvZHk+ICAgIAogICAgCiAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZvbGl1bS1tYXAiIGlkPSJtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQiID48L2Rpdj4KICAgICAgICAKPC9ib2R5Pgo8c2NyaXB0PiAgICAKICAgIAogICAgICAgICAgICB2YXIgbWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkID0gTC5tYXAoCiAgICAgICAgICAgICAgICAibWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkIiwKICAgICAgICAgICAgICAgIHsKICAgICAgICAgICAgICAgICAgICBjZW50ZXI6IFstMzcuODE0NTYzLCAxNDQuOTcwMjY3XSwKICAgICAgICAgICAgICAgICAgICBjcnM6IEwuQ1JTLkVQU0czODU3LAogICAgICAgICAgICAgICAgICAgIHpvb206IDExLAogICAgICAgICAgICAgICAgICAgIHpvb21Db250cm9sOiB0cnVlLAogICAgICAgICAgICAgICAgICAgIHByZWZlckNhbnZhczogZmFsc2UsCiAgICAgICAgICAgICAgICB9CiAgICAgICAgICAgICk7CgogICAgICAgICAgICAKCiAgICAgICAgCiAgICAKICAgICAgICAgICAgdmFyIHRpbGVfbGF5ZXJfYTAxZDE1NmQzMzcyNGRkMzkyZjViZDdjYTMyNzg5NDIgPSBMLnRpbGVMYXllcigKICAgICAgICAgICAgICAgICJodHRwczovL3tzfS50aWxlLm9wZW5zdHJlZXRtYXAub3JnL3t6fS97eH0ve3l9LnBuZyIsCiAgICAgICAgICAgICAgICB7ImF0dHJpYnV0aW9uIjogIkRhdGEgYnkgXHUwMDI2Y29weTsgXHUwMDNjYSBocmVmPVwiaHR0cDovL29wZW5zdHJlZXRtYXAub3JnXCJcdTAwM2VPcGVuU3RyZWV0TWFwXHUwMDNjL2FcdTAwM2UsIHVuZGVyIFx1MDAzY2EgaHJlZj1cImh0dHA6Ly93d3cub3BlbnN0cmVldG1hcC5vcmcvY29weXJpZ2h0XCJcdTAwM2VPRGJMXHUwMDNjL2FcdTAwM2UuIiwgImRldGVjdFJldGluYSI6IGZhbHNlLCAibWF4TmF0aXZlWm9vbSI6IDE4LCAibWF4Wm9vbSI6IDE4LCAibWluWm9vbSI6IDAsICJub1dyYXAiOiBmYWxzZSwgIm9wYWNpdHkiOiAxLCAic3ViZG9tYWlucyI6ICJhYmMiLCAidG1zIjogZmFsc2V9CiAgICAgICAgICAgICkuYWRkVG8obWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkKTsKICAgICAgICAKICAgIAogICAgICAgICAgICB2YXIgY2lyY2xlX21hcmtlcl8xOGMwNDBkNjgzZjA0MmU2YTg5OGYyZTcxMzM4Yzc2MSA9IEwuY2lyY2xlTWFya2VyKAogICAgICAgICAgICAgICAgWy0zNy43NjQ5MSwgMTQ0Ljk3OTU2N10sCiAgICAgICAgICAgICAgICB7ImJ1YmJsaW5nTW91c2VFdmVudHMiOiB0cnVlLCAiY29sb3IiOiAiIzMzODhmZiIsICJkYXNoQXJyYXkiOiBudWxsLCAiZGFzaE9mZnNldCI6IG51bGwsICJmaWxsIjogdHJ1ZSwgImZpbGxDb2xvciI6ICIjMzM4OGZmIiwgImZpbGxPcGFjaXR5IjogMC43LCAiZmlsbFJ1bGUiOiAiZXZlbm9kZCIsICJsaW5lQ2FwIjogInJvdW5kIiwgImxpbmVKb2luIjogInJvdW5kIiwgIm9wYWNpdHkiOiAxLjAsICJyYWRpdXMiOiA1LCAic3Ryb2tlIjogdHJ1ZSwgIndlaWdodCI6IDN9CiAgICAgICAgICAgICkuYWRkVG8obWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkKTsKICAgICAgICAKICAgIAogICAgICAgIHZhciBwb3B1cF9lMGM5Y2Y2YzhiYzE0MDViOTg1YzZlNDNmNzkwYjI5OCA9IEwucG9wdXAoeyJtYXhXaWR0aCI6ICIxMDAlIn0pOwoKICAgICAgICAKICAgICAgICAgICAgdmFyIGh0bWxfNjNjMjAwOTZkZjdkNGEyOWFkNzg0YTNmZDgzOGY2YTcgPSAkKGA8ZGl2IGlkPSJodG1sXzYzYzIwMDk2ZGY3ZDRhMjlhZDc4NGEzZmQ4MzhmNmE3IiBzdHlsZT0id2lkdGg6IDEwMC4wJTsgaGVpZ2h0OiAxMDAuMCU7Ij5icnVuc3dpY2sgZWFzdDwvZGl2PmApWzBdOwogICAgICAgICAgICBwb3B1cF9lMGM5Y2Y2YzhiYzE0MDViOTg1YzZlNDNmNzkwYjI5OC5zZXRDb250ZW50KGh0bWxfNjNjMjAwOTZkZjdkNGEyOWFkNzg0YTNmZDgzOGY2YTcpOwogICAgICAgIAoKICAgICAgICBjaXJjbGVfbWFya2VyXzE4YzA0MGQ2ODNmMDQyZTZhODk4ZjJlNzEzMzhjNzYxLmJpbmRQb3B1cChwb3B1cF9lMGM5Y2Y2YzhiYzE0MDViOTg1YzZlNDNmNzkwYjI5OCkKICAgICAgICA7CgogICAgICAgIAogICAgCiAgICAKICAgICAgICAgICAgdmFyIGNpcmNsZV9tYXJrZXJfYzBmZGU3MTljZWVhNDUyYWI4MWViOWNjMzQzZTAxMDUgPSBMLmNpcmNsZU1hcmtlcigKICAgICAgICAgICAgICAgIFstMzcuNzg4MTE4LCAxNDQuOTkyMDY3XSwKICAgICAgICAgICAgICAgIHsiYnViYmxpbmdNb3VzZUV2ZW50cyI6IHRydWUsICJjb2xvciI6ICIjMzM4OGZmIiwgImRhc2hBcnJheSI6IG51bGwsICJkYXNoT2Zmc2V0IjogbnVsbCwgImZpbGwiOiB0cnVlLCAiZmlsbENvbG9yIjogIiMzMzg4ZmYiLCAiZmlsbE9wYWNpdHkiOiAwLjcsICJmaWxsUnVsZSI6ICJldmVub2RkIiwgImxpbmVDYXAiOiAicm91bmQiLCAibGluZUpvaW4iOiAicm91bmQiLCAib3BhY2l0eSI6IDEuMCwgInJhZGl1cyI6IDUsICJzdHJva2UiOiB0cnVlLCAid2VpZ2h0IjogM30KICAgICAgICAgICAgKS5hZGRUbyhtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQpOwogICAgICAgIAogICAgCiAgICAgICAgdmFyIHBvcHVwXzkwMmMwOWM1MWM1MzRmZDY5NjNkMzQ3NTMzMThjOWJmID0gTC5wb3B1cCh7Im1heFdpZHRoIjogIjEwMCUifSk7CgogICAgICAgIAogICAgICAgICAgICB2YXIgaHRtbF9jZmNkYmYwNDAwNTg0ZGJhOTk1YjVjMTdhZGM2MGU0OSA9ICQoYDxkaXYgaWQ9Imh0bWxfY2ZjZGJmMDQwMDU4NGRiYTk5NWI1YzE3YWRjNjBlNDkiIHN0eWxlPSJ3aWR0aDogMTAwLjAlOyBoZWlnaHQ6IDEwMC4wJTsiPmNsaWZ0b24gaGlsbDwvZGl2PmApWzBdOwogICAgICAgICAgICBwb3B1cF85MDJjMDljNTFjNTM0ZmQ2OTYzZDM0NzUzMzE4YzliZi5zZXRDb250ZW50KGh0bWxfY2ZjZGJmMDQwMDU4NGRiYTk5NWI1YzE3YWRjNjBlNDkpOwogICAgICAgIAoKICAgICAgICBjaXJjbGVfbWFya2VyX2MwZmRlNzE5Y2VlYTQ1MmFiODFlYjljYzM0M2UwMTA1LmJpbmRQb3B1cChwb3B1cF85MDJjMDljNTFjNTM0ZmQ2OTYzZDM0NzUzMzE4YzliZikKICAgICAgICA7CgogICAgICAgIAogICAgCiAgICAKICAgICAgICAgICAgdmFyIGNpcmNsZV9tYXJrZXJfZTM0ZjQ0Y2ZiYjQ2NDU5NDkzZjM1NzJjZmQyOWI1MmMgPSBMLmNpcmNsZU1hcmtlcigKICAgICAgICAgICAgICAgIFstMzcuNzQzMTg4LCAxNDQuOTY2Mjc5MDAwMDAwMDFdLAogICAgICAgICAgICAgICAgeyJidWJibGluZ01vdXNlRXZlbnRzIjogdHJ1ZSwgImNvbG9yIjogIiMzMzg4ZmYiLCAiZGFzaEFycmF5IjogbnVsbCwgImRhc2hPZmZzZXQiOiBudWxsLCAiZmlsbCI6IHRydWUsICJmaWxsQ29sb3IiOiAiIzMzODhmZiIsICJmaWxsT3BhY2l0eSI6IDAuNywgImZpbGxSdWxlIjogImV2ZW5vZGQiLCAibGluZUNhcCI6ICJyb3VuZCIsICJsaW5lSm9pbiI6ICJyb3VuZCIsICJvcGFjaXR5IjogMS4wLCAicmFkaXVzIjogNSwgInN0cm9rZSI6IHRydWUsICJ3ZWlnaHQiOiAzfQogICAgICAgICAgICApLmFkZFRvKG1hcF82ZjkxNzMyMTRkOGU0NDJkYTM2MWE3ZmU5MzQ4MDdmZCk7CiAgICAgICAgCiAgICAKICAgICAgICB2YXIgcG9wdXBfZjIyYjNkYzU3MTYyNGM4MDg2NDExMmMzOWYyNjBiY2YgPSBMLnBvcHVwKHsibWF4V2lkdGgiOiAiMTAwJSJ9KTsKCiAgICAgICAgCiAgICAgICAgICAgIHZhciBodG1sXzc2M2Y0YWQxYTcxOTRjZTY4ZTgzNTEyNzZjZWVhYmRmID0gJChgPGRpdiBpZD0iaHRtbF83NjNmNGFkMWE3MTk0Y2U2OGU4MzUxMjc2Y2VlYWJkZiIgc3R5bGU9IndpZHRoOiAxMDAuMCU7IGhlaWdodDogMTAwLjAlOyI+Y29idXJnPC9kaXY+YClbMF07CiAgICAgICAgICAgIHBvcHVwX2YyMmIzZGM1NzE2MjRjODA4NjQxMTJjMzlmMjYwYmNmLnNldENvbnRlbnQoaHRtbF83NjNmNGFkMWE3MTk0Y2U2OGU4MzUxMjc2Y2VlYWJkZik7CiAgICAgICAgCgogICAgICAgIGNpcmNsZV9tYXJrZXJfZTM0ZjQ0Y2ZiYjQ2NDU5NDkzZjM1NzJjZmQyOWI1MmMuYmluZFBvcHVwKHBvcHVwX2YyMmIzZGM1NzE2MjRjODA4NjQxMTJjMzlmMjYwYmNmKQogICAgICAgIDsKCiAgICAgICAgCiAgICAKICAgIAogICAgICAgICAgICB2YXIgY2lyY2xlX21hcmtlcl83MWU2MzhjNDgxMzg0ZTNiYjhjYjBhNjRlNDcyZWNhYiA9IEwuY2lyY2xlTWFya2VyKAogICAgICAgICAgICAgICAgWy0zNy43ODM0LCAxNDQuOTg0Njg3OTk5OTk5OThdLAogICAgICAgICAgICAgICAgeyJidWJibGluZ01vdXNlRXZlbnRzIjogdHJ1ZSwgImNvbG9yIjogIiMzMzg4ZmYiLCAiZGFzaEFycmF5IjogbnVsbCwgImRhc2hPZmZzZXQiOiBudWxsLCAiZmlsbCI6IHRydWUsICJmaWxsQ29sb3IiOiAiIzMzODhmZiIsICJmaWxsT3BhY2l0eSI6IDAuNywgImZpbGxSdWxlIjogImV2ZW5vZGQiLCAibGluZUNhcCI6ICJyb3VuZCIsICJsaW5lSm9pbiI6ICJyb3VuZCIsICJvcGFjaXR5IjogMS4wLCAicmFkaXVzIjogNSwgInN0cm9rZSI6IHRydWUsICJ3ZWlnaHQiOiAzfQogICAgICAgICAgICApLmFkZFRvKG1hcF82ZjkxNzMyMTRkOGU0NDJkYTM2MWE3ZmU5MzQ4MDdmZCk7CiAgICAgICAgCiAgICAKICAgICAgICB2YXIgcG9wdXBfOTIyNjdlZjRmOTFkNGZiNGI0NTFhOGQ3N2EyZWU0ZTYgPSBMLnBvcHVwKHsibWF4V2lkdGgiOiAiMTAwJSJ9KTsKCiAgICAgICAgCiAgICAgICAgICAgIHZhciBodG1sXzUwNWVkYzg2MzU3ODRkNDZiMDM0OTVkNWJhYWNkMGZkID0gJChgPGRpdiBpZD0iaHRtbF81MDVlZGM4NjM1Nzg0ZDQ2YjAzNDk1ZDViYWFjZDBmZCIgc3R5bGU9IndpZHRoOiAxMDAuMCU7IGhlaWdodDogMTAwLjAlOyI+Zml0enJveSBub3J0aDwvZGl2PmApWzBdOwogICAgICAgICAgICBwb3B1cF85MjI2N2VmNGY5MWQ0ZmI0YjQ1MWE4ZDc3YTJlZTRlNi5zZXRDb250ZW50KGh0bWxfNTA1ZWRjODYzNTc4NGQ0NmIwMzQ5NWQ1YmFhY2QwZmQpOwogICAgICAgIAoKICAgICAgICBjaXJjbGVfbWFya2VyXzcxZTYzOGM0ODEzODRlM2JiOGNiMGE2NGU0NzJlY2FiLmJpbmRQb3B1cChwb3B1cF85MjI2N2VmNGY5MWQ0ZmI0YjQ1MWE4ZDc3YTJlZTRlNikKICAgICAgICA7CgogICAgICAgIAogICAgCiAgICAKICAgICAgICAgICAgdmFyIGNpcmNsZV9tYXJrZXJfMzY2YTI4MzcwODVhNDY5YzgwNjZjZDMwYWM3YmU5OGEgPSBMLmNpcmNsZU1hcmtlcigKICAgICAgICAgICAgICAgIFstMzcuNzgyMjUzOTk5OTk5OTk1LCAxNDUuMDAxODExXSwKICAgICAgICAgICAgICAgIHsiYnViYmxpbmdNb3VzZUV2ZW50cyI6IHRydWUsICJjb2xvciI6ICIjMzM4OGZmIiwgImRhc2hBcnJheSI6IG51bGwsICJkYXNoT2Zmc2V0IjogbnVsbCwgImZpbGwiOiB0cnVlLCAiZmlsbENvbG9yIjogIiMzMzg4ZmYiLCAiZmlsbE9wYWNpdHkiOiAwLjcsICJmaWxsUnVsZSI6ICJldmVub2RkIiwgImxpbmVDYXAiOiAicm91bmQiLCAibGluZUpvaW4iOiAicm91bmQiLCAib3BhY2l0eSI6IDEuMCwgInJhZGl1cyI6IDUsICJzdHJva2UiOiB0cnVlLCAid2VpZ2h0IjogM30KICAgICAgICAgICAgKS5hZGRUbyhtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQpOwogICAgICAgIAogICAgCiAgICAgICAgdmFyIHBvcHVwXzdhZjIzMmRkZmE3ZjQ2MDE5MDRjYjNmYTYyNTUzNjRlID0gTC5wb3B1cCh7Im1heFdpZHRoIjogIjEwMCUifSk7CgogICAgICAgIAogICAgICAgICAgICB2YXIgaHRtbF9iYjI0MjM4M2FiNGM0YzM3YTZjNmI2ZjZiY2M2ZWEwMiA9ICQoYDxkaXYgaWQ9Imh0bWxfYmIyNDIzODNhYjRjNGMzN2E2YzZiNmY2YmNjNmVhMDIiIHN0eWxlPSJ3aWR0aDogMTAwLjAlOyBoZWlnaHQ6IDEwMC4wJTsiPmhhd3Rob3JuIGVhc3Q8L2Rpdj5gKVswXTsKICAgICAgICAgICAgcG9wdXBfN2FmMjMyZGRmYTdmNDYwMTkwNGNiM2ZhNjI1NTM2NGUuc2V0Q29udGVudChodG1sX2JiMjQyMzgzYWI0YzRjMzdhNmM2YjZmNmJjYzZlYTAyKTsKICAgICAgICAKCiAgICAgICAgY2lyY2xlX21hcmtlcl8zNjZhMjgzNzA4NWE0NjljODA2NmNkMzBhYzdiZTk4YS5iaW5kUG9wdXAocG9wdXBfN2FmMjMyZGRmYTdmNDYwMTkwNGNiM2ZhNjI1NTM2NGUpCiAgICAgICAgOwoKICAgICAgICAKICAgIAogICAgCiAgICAgICAgICAgIHZhciBjaXJjbGVfbWFya2VyXzE0NzdmMjhjOWY4YzQwNmM5MzQ1YWYyMzVkYThlOTU2ID0gTC5jaXJjbGVNYXJrZXIoCiAgICAgICAgICAgICAgICBbLTM3Ljg3ODM3MDAwMDAwMDAwNCwgMTQ1LjA2Nzg5Ml0sCiAgICAgICAgICAgICAgICB7ImJ1YmJsaW5nTW91c2VFdmVudHMiOiB0cnVlLCAiY29sb3IiOiAiIzMzODhmZiIsICJkYXNoQXJyYXkiOiBudWxsLCAiZGFzaE9mZnNldCI6IG51bGwsICJmaWxsIjogdHJ1ZSwgImZpbGxDb2xvciI6ICIjMzM4OGZmIiwgImZpbGxPcGFjaXR5IjogMC43LCAiZmlsbFJ1bGUiOiAiZXZlbm9kZCIsICJsaW5lQ2FwIjogInJvdW5kIiwgImxpbmVKb2luIjogInJvdW5kIiwgIm9wYWNpdHkiOiAxLjAsICJyYWRpdXMiOiA1LCAic3Ryb2tlIjogdHJ1ZSwgIndlaWdodCI6IDN9CiAgICAgICAgICAgICkuYWRkVG8obWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkKTsKICAgICAgICAKICAgIAogICAgICAgIHZhciBwb3B1cF9hYzJmNGRkZjcxOTE0MjM0YWM2NjZiMjUyZDBjMTU3YSA9IEwucG9wdXAoeyJtYXhXaWR0aCI6ICIxMDAlIn0pOwoKICAgICAgICAKICAgICAgICAgICAgdmFyIGh0bWxfNThlNWNkN2QxMmZlNDNhNzk0NWQ1NjZmMGZiMmFiNDggPSAkKGA8ZGl2IGlkPSJodG1sXzU4ZTVjZDdkMTJmZTQzYTc5NDVkNTY2ZjBmYjJhYjQ4IiBzdHlsZT0id2lkdGg6IDEwMC4wJTsgaGVpZ2h0OiAxMDAuMCU7Ij5tYWx2ZXJuIGVhc3Q8L2Rpdj5gKVswXTsKICAgICAgICAgICAgcG9wdXBfYWMyZjRkZGY3MTkxNDIzNGFjNjY2YjI1MmQwYzE1N2Euc2V0Q29udGVudChodG1sXzU4ZTVjZDdkMTJmZTQzYTc5NDVkNTY2ZjBmYjJhYjQ4KTsKICAgICAgICAKCiAgICAgICAgY2lyY2xlX21hcmtlcl8xNDc3ZjI4YzlmOGM0MDZjOTM0NWFmMjM1ZGE4ZTk1Ni5iaW5kUG9wdXAocG9wdXBfYWMyZjRkZGY3MTkxNDIzNGFjNjY2YjI1MmQwYzE1N2EpCiAgICAgICAgOwoKICAgICAgICAKICAgIAogICAgCiAgICAgICAgICAgIHZhciBjaXJjbGVfbWFya2VyXzY5OTk2OTgwZDBmNzRmOTlhZWVmOGRiNzVmZmY3ZjJiID0gTC5jaXJjbGVNYXJrZXIoCiAgICAgICAgICAgICAgICBbLTM3Ljg0OTU3NzAwMDAwMDAwNCwgMTQ0Ljk5MzcxMzk5OTk5OTk4XSwKICAgICAgICAgICAgICAgIHsiYnViYmxpbmdNb3VzZUV2ZW50cyI6IHRydWUsICJjb2xvciI6ICIjMzM4OGZmIiwgImRhc2hBcnJheSI6IG51bGwsICJkYXNoT2Zmc2V0IjogbnVsbCwgImZpbGwiOiB0cnVlLCAiZmlsbENvbG9yIjogIiMzMzg4ZmYiLCAiZmlsbE9wYWNpdHkiOiAwLjcsICJmaWxsUnVsZSI6ICJldmVub2RkIiwgImxpbmVDYXAiOiAicm91bmQiLCAibGluZUpvaW4iOiAicm91bmQiLCAib3BhY2l0eSI6IDEuMCwgInJhZGl1cyI6IDUsICJzdHJva2UiOiB0cnVlLCAid2VpZ2h0IjogM30KICAgICAgICAgICAgKS5hZGRUbyhtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQpOwogICAgICAgIAogICAgCiAgICAgICAgdmFyIHBvcHVwXzM4ZDU5MjhmNTJmMTQ4NzRhMjcxODBiZDJlNWQyZDFjID0gTC5wb3B1cCh7Im1heFdpZHRoIjogIjEwMCUifSk7CgogICAgICAgIAogICAgICAgICAgICB2YXIgaHRtbF82NzY4MTY1YzNjOWI0Mjg2ODYyZjM5MDBiMDc1MmY2YiA9ICQoYDxkaXYgaWQ9Imh0bWxfNjc2ODE2NWMzYzliNDI4Njg2MmYzOTAwYjA3NTJmNmIiIHN0eWxlPSJ3aWR0aDogMTAwLjAlOyBoZWlnaHQ6IDEwMC4wJTsiPnByYWhyYW48L2Rpdj5gKVswXTsKICAgICAgICAgICAgcG9wdXBfMzhkNTkyOGY1MmYxNDg3NGEyNzE4MGJkMmU1ZDJkMWMuc2V0Q29udGVudChodG1sXzY3NjgxNjVjM2M5YjQyODY4NjJmMzkwMGIwNzUyZjZiKTsKICAgICAgICAKCiAgICAgICAgY2lyY2xlX21hcmtlcl82OTk5Njk4MGQwZjc0Zjk5YWVlZjhkYjc1ZmZmN2YyYi5iaW5kUG9wdXAocG9wdXBfMzhkNTkyOGY1MmYxNDg3NGEyNzE4MGJkMmU1ZDJkMWMpCiAgICAgICAgOwoKICAgICAgICAKICAgIAogICAgCiAgICAgICAgICAgIHZhciBjaXJjbGVfbWFya2VyXzk5YmFiOGM0NDM3ZTQ5MmQ4YjgzZDliYTI0MTk0ZWQ2ID0gTC5jaXJjbGVNYXJrZXIoCiAgICAgICAgICAgICAgICBbLTM3Ljc4MDk5NTAwMDAwMDAwNCwgMTQ0Ljk2Mjc5MTk5OTk5OTk4XSwKICAgICAgICAgICAgICAgIHsiYnViYmxpbmdNb3VzZUV2ZW50cyI6IHRydWUsICJjb2xvciI6ICIjMzM4OGZmIiwgImRhc2hBcnJheSI6IG51bGwsICJkYXNoT2Zmc2V0IjogbnVsbCwgImZpbGwiOiB0cnVlLCAiZmlsbENvbG9yIjogIiMzMzg4ZmYiLCAiZmlsbE9wYWNpdHkiOiAwLjcsICJmaWxsUnVsZSI6ICJldmVub2RkIiwgImxpbmVDYXAiOiAicm91bmQiLCAibGluZUpvaW4iOiAicm91bmQiLCAib3BhY2l0eSI6IDEuMCwgInJhZGl1cyI6IDUsICJzdHJva2UiOiB0cnVlLCAid2VpZ2h0IjogM30KICAgICAgICAgICAgKS5hZGRUbyhtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQpOwogICAgICAgIAogICAgCiAgICAgICAgdmFyIHBvcHVwXzc3NmJlNDg2YzdkYTQxNzE5YTAzNGUxYmQyYWU0OGMyID0gTC5wb3B1cCh7Im1heFdpZHRoIjogIjEwMCUifSk7CgogICAgICAgIAogICAgICAgICAgICB2YXIgaHRtbF9lMDg1NWRlMzM1Y2M0Mjk3YjNkODZjOWQ2NTNlZjM0MiA9ICQoYDxkaXYgaWQ9Imh0bWxfZTA4NTVkZTMzNWNjNDI5N2IzZDg2YzlkNjUzZWYzNDIiIHN0eWxlPSJ3aWR0aDogMTAwLjAlOyBoZWlnaHQ6IDEwMC4wJTsiPnByaW5jZXMgaGlsbDwvZGl2PmApWzBdOwogICAgICAgICAgICBwb3B1cF83NzZiZTQ4NmM3ZGE0MTcxOWEwMzRlMWJkMmFlNDhjMi5zZXRDb250ZW50KGh0bWxfZTA4NTVkZTMzNWNjNDI5N2IzZDg2YzlkNjUzZWYzNDIpOwogICAgICAgIAoKICAgICAgICBjaXJjbGVfbWFya2VyXzk5YmFiOGM0NDM3ZTQ5MmQ4YjgzZDliYTI0MTk0ZWQ2LmJpbmRQb3B1cChwb3B1cF83NzZiZTQ4NmM3ZGE0MTcxOWEwMzRlMWJkMmFlNDhjMikKICAgICAgICA7CgogICAgICAgIAogICAgCiAgICAKICAgICAgICAgICAgdmFyIGNpcmNsZV9tYXJrZXJfNjU0Zjk3ZGQzYjNmNDk0Mzk3ODY0MmJhMWQyNjE4ZjQgPSBMLmNpcmNsZU1hcmtlcigKICAgICAgICAgICAgICAgIFstMzcuODM3ODgzMDAwMDAwMDA1LCAxNDQuOTkxMTIzXSwKICAgICAgICAgICAgICAgIHsiYnViYmxpbmdNb3VzZUV2ZW50cyI6IHRydWUsICJjb2xvciI6ICIjMzM4OGZmIiwgImRhc2hBcnJheSI6IG51bGwsICJkYXNoT2Zmc2V0IjogbnVsbCwgImZpbGwiOiB0cnVlLCAiZmlsbENvbG9yIjogIiMzMzg4ZmYiLCAiZmlsbE9wYWNpdHkiOiAwLjcsICJmaWxsUnVsZSI6ICJldmVub2RkIiwgImxpbmVDYXAiOiAicm91bmQiLCAibGluZUpvaW4iOiAicm91bmQiLCAib3BhY2l0eSI6IDEuMCwgInJhZGl1cyI6IDUsICJzdHJva2UiOiB0cnVlLCAid2VpZ2h0IjogM30KICAgICAgICAgICAgKS5hZGRUbyhtYXBfNmY5MTczMjE0ZDhlNDQyZGEzNjFhN2ZlOTM0ODA3ZmQpOwogICAgICAgIAogICAgCiAgICAgICAgdmFyIHBvcHVwXzgxMzQ5YjEwZjg3MDQyYzQ5MjE3MGU4NmY5NWM3MDE3ID0gTC5wb3B1cCh7Im1heFdpZHRoIjogIjEwMCUifSk7CgogICAgICAgIAogICAgICAgICAgICB2YXIgaHRtbF8zNzRlOGU4MjBiY2M0OWQ3OGJjYzgxYTY2OTE5MzJhZiA9ICQoYDxkaXYgaWQ9Imh0bWxfMzc0ZThlODIwYmNjNDlkNzhiY2M4MWE2NjkxOTMyYWYiIHN0eWxlPSJ3aWR0aDogMTAwLjAlOyBoZWlnaHQ6IDEwMC4wJTsiPnNvdXRoIHlhcnJhPC9kaXY+YClbMF07CiAgICAgICAgICAgIHBvcHVwXzgxMzQ5YjEwZjg3MDQyYzQ5MjE3MGU4NmY5NWM3MDE3LnNldENvbnRlbnQoaHRtbF8zNzRlOGU4MjBiY2M0OWQ3OGJjYzgxYTY2OTE5MzJhZik7CiAgICAgICAgCgogICAgICAgIGNpcmNsZV9tYXJrZXJfNjU0Zjk3ZGQzYjNmNDk0Mzk3ODY0MmJhMWQyNjE4ZjQuYmluZFBvcHVwKHBvcHVwXzgxMzQ5YjEwZjg3MDQyYzQ5MjE3MGU4NmY5NWM3MDE3KQogICAgICAgIDsKCiAgICAgICAgCiAgICAKICAgIAogICAgICAgICAgICB2YXIgY2lyY2xlX21hcmtlcl9jNWI4YzM4Yjk5MWI0MGMwYmUxOTEwNzY1NzI5YTUxMSA9IEwuY2lyY2xlTWFya2VyKAogICAgICAgICAgICAgICAgWy0zNy43Mjc0ODIsIDE0NS4xMDIzMDkwMDAwMDAwMl0sCiAgICAgICAgICAgICAgICB7ImJ1YmJsaW5nTW91c2VFdmVudHMiOiB0cnVlLCAiY29sb3IiOiAiIzMzODhmZiIsICJkYXNoQXJyYXkiOiBudWxsLCAiZGFzaE9mZnNldCI6IG51bGwsICJmaWxsIjogdHJ1ZSwgImZpbGxDb2xvciI6ICIjMzM4OGZmIiwgImZpbGxPcGFjaXR5IjogMC43LCAiZmlsbFJ1bGUiOiAiZXZlbm9kZCIsICJsaW5lQ2FwIjogInJvdW5kIiwgImxpbmVKb2luIjogInJvdW5kIiwgIm9wYWNpdHkiOiAxLjAsICJyYWRpdXMiOiA1LCAic3Ryb2tlIjogdHJ1ZSwgIndlaWdodCI6IDN9CiAgICAgICAgICAgICkuYWRkVG8obWFwXzZmOTE3MzIxNGQ4ZTQ0MmRhMzYxYTdmZTkzNDgwN2ZkKTsKICAgICAgICAKICAgIAogICAgICAgIHZhciBwb3B1cF80NWE4YjNkN2ZjYTA0NTE2YWVjZDljYWMxM2MyYjcxMSA9IEwucG9wdXAoeyJtYXhXaWR0aCI6ICIxMDAlIn0pOwoKICAgICAgICAKICAgICAgICAgICAgdmFyIGh0bWxfMWI0Mjk0Y2RkZmVjNDFkOWE5ZDY3YzM2MzMwNDAwNTYgPSAkKGA8ZGl2IGlkPSJodG1sXzFiNDI5NGNkZGZlYzQxZDlhOWQ2N2MzNjMzMDQwMDU2IiBzdHlsZT0id2lkdGg6IDEwMC4wJTsgaGVpZ2h0OiAxMDAuMCU7Ij55YWxsYW1iaWU8L2Rpdj5gKVswXTsKICAgICAgICAgICAgcG9wdXBfNDVhOGIzZDdmY2EwNDUxNmFlY2Q5Y2FjMTNjMmI3MTEuc2V0Q29udGVudChodG1sXzFiNDI5NGNkZGZlYzQxZDlhOWQ2N2MzNjMzMDQwMDU2KTsKICAgICAgICAKCiAgICAgICAgY2lyY2xlX21hcmtlcl9jNWI4YzM4Yjk5MWI0MGMwYmUxOTEwNzY1NzI5YTUxMS5iaW5kUG9wdXAocG9wdXBfNDVhOGIzZDdmY2EwNDUxNmFlY2Q5Y2FjMTNjMmI3MTEpCiAgICAgICAgOwoKICAgICAgICAKICAgIAo8L3NjcmlwdD4=" style="position:absolute;width:100%;height:100%;left:0;top:0;border:none !important;" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe></div></div>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+ 
+
+
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var mathjaxscript = document.createElement('script');
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = '//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: 'center'," +
+        "    displayIndent: '0em'," +
+        "    showMathMenu: true," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['$','$'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        " linebreaks: { automatic: true, width: '95% container' }, " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'black ! important'} }" +
+        "    } " +
+        "}); ";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+
+  </div>
+</article>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="row">
+       <ul class="col-sm-6 list-inline">
+          <li class="list-inline-item"><a href="http://dataistdogma.github.io/authors.html">Authors</a></li>
+          <li class="list-inline-item"><a href="http://dataistdogma.github.io/archives.html">Archives</a></li>
+          <li class="list-inline-item"><a href="http://dataistdogma.github.io/categories.html">Categories</a></li>
+          <li class="list-inline-item"><a href="http://dataistdogma.github.io/tags.html">Tags</a></li>
+        </ul>
+        <p class="col-sm-6 text-sm-right text-muted">
+          Generated by <a href="https://github.com/getpelican/pelican" target="_blank">Pelican</a> / <a href="https://github.com/nairobilug/pelican-alchemy" target="_blank">&#x2728;</a>
+        </p>
+      </div>
+    </div>
+  </footer>
+</body>
+
+</html>
